@@ -162,11 +162,11 @@ func (p *TomatickMemento) progress(duration time.Duration) {
 }
 
 func (p *TomatickMemento) takeShortBreak() {
-	p.startTimer(p.cfg.ShortBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightGreen("On short break...")).String())
+	p.startTimer(p.cfg.ShortBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightGreen("\nOn short break...")).String())
 }
 
 func (p *TomatickMemento) takeLongBreak() {
-	p.startTimer(p.cfg.LongBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("4 TomatickMementos complete! On long break...")).String())
+	p.startTimer(p.cfg.LongBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("\nTomatickMementos long cycle complete! On long break...")).String())
 }
 
 func playSound() {
