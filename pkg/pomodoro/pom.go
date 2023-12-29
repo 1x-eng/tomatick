@@ -18,16 +18,13 @@ import (
 	"github.com/vbauerster/mpb/v7/decor"
 )
 
-const (
-	TomatickMementosBeforeLongBreak = 4
-)
-
 type TomatickMemento struct {
 	cfg                      *config.Config
 	memClient                *ltm.MemAI
 	memID                    string
 	cycleCount               int
 	cyclesSinceLastLongBreak int
+	auroraInstance           aurora.Aurora
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -36,17 +33,18 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 		memClient:                ltm.NewMemAI(cfg),
 		cycleCount:               0,
 		cyclesSinceLastLongBreak: 0,
+		auroraInstance:           aurora.NewAurora(true),
 	}
 }
 
 func (p *TomatickMemento) StartCycle() {
 
 	if p.cycleCount == 0 {
-		displayWelcomeMessage()
+		displayWelcomeMessage(p.auroraInstance)
 	}
 
 	for {
-		if p.cyclesSinceLastLongBreak >= TomatickMementosBeforeLongBreak {
+		if p.cyclesSinceLastLongBreak >= p.cfg.CyclesBeforeLongBreak {
 			p.takeLongBreak()
 			p.cyclesSinceLastLongBreak = 0
 		} else {
@@ -55,7 +53,7 @@ func (p *TomatickMemento) StartCycle() {
 		}
 
 		if !p.askToContinue() {
-			fmt.Println("Tomatick workday completed. Goodbye!")
+			fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightGreen(("\nTomatick workday completed. Goodbye!"))))
 			break
 		}
 		p.cycleCount++
@@ -64,7 +62,7 @@ func (p *TomatickMemento) StartCycle() {
 
 func (p *TomatickMemento) askToContinue() bool {
 	continuePrompt := &survey.Confirm{
-		Message: "Would you like to start another Tomatick cycle?",
+		Message: p.auroraInstance.BrightBlue("Would you like to start another Tomatick cycle?").String(),
 	}
 	var answer bool
 	survey.AskOne(continuePrompt, &answer)
@@ -73,11 +71,11 @@ func (p *TomatickMemento) askToContinue() bool {
 
 func (p *TomatickMemento) runTomatickMementoCycle() {
 	if p.memID == "" {
-		p.memID = p.memClient.CreateMem(fmt.Sprintf("# Tomatick Workday | %s\n", time.Now().Format("02-01-2006")))
+		p.memID = p.memClient.CreateMem(fmt.Sprintf("# Tomatick Workday | %s\n#workday #tomatick\n", time.Now().Format("02-01-2006")))
 	}
 
 	tasks := p.captureTasks()
-	p.startTimer(p.cfg.TomatickMementoDuration, "Tick Tock Tick Tock...")
+	p.startTimer(p.cfg.TomatickMementoDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("Tick Tock Tick Tock...")).String())
 
 	completedTasks := p.markTasksComplete(tasks)
 	reflections := p.captureReflections()
@@ -88,12 +86,14 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 }
 
 func (p *TomatickMemento) captureTasks() []string {
-	fmt.Println("Remember the 80:20 rule and enter tasks that you plan to work on (one per line), type 'done' to finish:")
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow(("\nRemember the 80:20 rule and enter tasks that you plan to work on (one per line), type 'done' to finish:"))))
+
 	scanner := bufio.NewScanner(os.Stdin)
 	var tasks []string
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.ToLower(line) == "done" {
+			fmt.Println()
 			break
 		}
 		tasks = append(tasks, line)
@@ -103,12 +103,12 @@ func (p *TomatickMemento) captureTasks() []string {
 
 func (p *TomatickMemento) markTasksComplete(tasks []string) string {
 	au := aurora.NewAurora(true)
-	fmt.Println(au.Bold(au.Magenta("How'd you go? Mark tasks that you completed:")))
+	fmt.Println(au.Bold(au.Magenta("\nHow'd you go? Mark tasks that you completed:")))
 
 	completed := make([]bool, len(tasks))
 	for i, task := range tasks {
 		prompt := &survey.Confirm{
-			Message: fmt.Sprintf("Did you complete '%s'?", task),
+			Message: fmt.Sprintf(p.auroraInstance.Italic(p.auroraInstance.BrightWhite("Did you complete '%s'?")).String(), task),
 		}
 		survey.AskOne(prompt, &completed[i])
 	}
@@ -125,7 +125,7 @@ func (p *TomatickMemento) markTasksComplete(tasks []string) string {
 }
 
 func (p *TomatickMemento) captureReflections() string {
-	fmt.Println("Reflect and record your wins & distractions:")
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightWhite(("\nReflect and record your wins & distractions:"))))
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text()
@@ -133,22 +133,24 @@ func (p *TomatickMemento) captureReflections() string {
 
 func (p *TomatickMemento) startTimer(duration time.Duration, message string) {
 	au := aurora.NewAurora(true)
-	fmt.Println(au.Bold(au.Cyan(message)))
+	fmt.Println(au.Bold(au.BrightBlue(message)))
 
-	p.progress(duration, au)
+	p.progress(duration)
 
 	playSound()
 }
 
-func (p *TomatickMemento) progress(duration time.Duration, au aurora.Aurora) {
+func (p *TomatickMemento) progress(duration time.Duration) {
 	pBar := mpb.New(mpb.WithWidth(60))
 	totalSeconds := int(duration.Seconds())
 	bar := pBar.AddBar(int64(totalSeconds),
 		mpb.PrependDecorators(
-			decor.Name("Time left: "),
+			decor.Name(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("Time elapsed: ")).String()),
 			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 5}),
 		),
-		mpb.AppendDecorators(decor.Percentage()),
+		mpb.AppendDecorators(decor.OnComplete(
+			decor.Spinner(nil, decor.WC{W: 5}), p.auroraInstance.Bold(p.auroraInstance.BrightGreen("Done!")).String(),
+		)),
 	)
 
 	for i := 0; i < totalSeconds; i++ {
@@ -160,21 +162,18 @@ func (p *TomatickMemento) progress(duration time.Duration, au aurora.Aurora) {
 }
 
 func (p *TomatickMemento) takeShortBreak() {
-	fmt.Println("Starting short break...")
-	p.startTimer(p.cfg.ShortBreakDuration, "On short break...")
+	p.startTimer(p.cfg.ShortBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightGreen("On short break...")).String())
 }
 
 func (p *TomatickMemento) takeLongBreak() {
-	fmt.Println("4 TomatickMementos complete. Starting long break.")
-	p.startTimer(p.cfg.LongBreakDuration, "On long break...")
+	p.startTimer(p.cfg.LongBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("4 TomatickMementos complete! On long break...")).String())
 }
 
 func playSound() {
 	// todo: Add sound playing logic here
 }
 
-func displayWelcomeMessage() {
-	au := aurora.NewAurora(true)
+func displayWelcomeMessage(au aurora.Aurora) {
 	asciiArt := `
 
 	████████╗ ██████╗ ███╗   ███╗ █████╗ ████████╗██╗ ██████╗██╗  ██╗
@@ -184,6 +183,6 @@ func displayWelcomeMessage() {
 	   ██║   ╚██████╔╝██║ ╚═╝ ██║██║  ██║   ██║   ██║╚██████╗██║  ██╗
 	   ╚═╝    ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
 	`
-	fmt.Println(au.Bold(au.BrightGreen(asciiArt)))
-	fmt.Println("\n")
+	fmt.Println(au.Bold(au.BrightMagenta(asciiArt)))
+	fmt.Println()
 }
