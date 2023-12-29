@@ -102,8 +102,7 @@ func (p *TomatickMemento) captureTasks() []string {
 }
 
 func (p *TomatickMemento) markTasksComplete(tasks []string) string {
-	au := aurora.NewAurora(true)
-	fmt.Println(au.Bold(au.Magenta("\nHow'd you go? Mark tasks that you completed:")))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.Magenta("\nHow'd you go? Mark tasks that you completed:")))
 
 	completed := make([]bool, len(tasks))
 	for i, task := range tasks {
@@ -141,8 +140,7 @@ func (p *TomatickMemento) captureReflections() string {
 }
 
 func (p *TomatickMemento) startTimer(duration time.Duration, message string) {
-	au := aurora.NewAurora(true)
-	fmt.Println(au.Bold(au.BrightBlue(message)))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue(message)))
 
 	p.progress(duration)
 
