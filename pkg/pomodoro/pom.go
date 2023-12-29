@@ -125,10 +125,19 @@ func (p *TomatickMemento) markTasksComplete(tasks []string) string {
 }
 
 func (p *TomatickMemento) captureReflections() string {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightWhite(("\nReflect and record your wins & distractions:"))))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightWhite(("\nReflect and record your wins & distractions (you can use multiple lines, type 'done' to finish):"))))
+
 	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	return scanner.Text()
+	var reflections []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.ToLower(line) == "done" {
+			fmt.Println()
+			break
+		}
+		reflections = append(reflections, line)
+	}
+	return strings.Join(reflections, "\n")
 }
 
 func (p *TomatickMemento) startTimer(duration time.Duration, message string) {
