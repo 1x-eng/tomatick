@@ -44,7 +44,7 @@ MEM_AI_API_TOKEN=your_mem_ai_api_token
 
 ### Usage
 
-- Run it, `go run main.go` from repo root.
+- Run it, `go run main.go` from repo root OR `go build` from repo root, and use the executable.
 - Follow interactive prompts, and enjoy :wave:
 
 
