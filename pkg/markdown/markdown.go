@@ -16,6 +16,6 @@ func FormatTasks(tasks []string) string {
 
 func FormatCycleSummary(tasks, reflections string) string {
 	return fmt.Sprintf(
-		"## Tomatick Cycle: %s\n\n### Tasks\n%s\n\n### Reflections\n%s\n",
+		"## Tomatick Cycle: %s\n\n### Tasks\n%s\n\n### Reflections\n%s\n***\n",
 		time.Now().Format("02-01-2006 15:04"), tasks, reflections)
 }
