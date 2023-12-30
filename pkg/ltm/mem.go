@@ -21,15 +21,15 @@ func NewMemAI(cfg *config.Config) *MemAI {
 	}
 }
 
-func (m *MemAI) CreateMem(content string) string {
+func (m *MemAI) CreateMem(content string) (string, error) {
 	return m.postRequest("https://api.mem.ai/v0/mems", content, "")
 }
 
-func (m *MemAI) AppendToMem(memID, content string) {
-	m.postRequest(fmt.Sprintf("https://api.mem.ai/v0/mems/%s/append", memID), content, memID)
+func (m *MemAI) AppendToMem(memID, content string) (string, error) {
+	return m.postRequest(fmt.Sprintf("https://api.mem.ai/v0/mems/%s/append", memID), content, memID)
 }
 
-func (m *MemAI) postRequest(url, content, memID string) string {
+func (m *MemAI) postRequest(url, content, memID string) (string, error) {
 	requestBody, _ := json.Marshal(map[string]string{"content": content})
 
 	request, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
@@ -39,14 +39,16 @@ func (m *MemAI) postRequest(url, content, memID string) string {
 	response, err := m.client.Do(request)
 	if err != nil {
 		fmt.Println("Error sending request to mem.ai:", err)
-		return ""
+		return "", err
 	}
 	defer response.Body.Close()
 
 	if memID == "" {
 		var result map[string]string
-		json.NewDecoder(response.Body).Decode(&result)
-		return result["id"]
+		if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+			return "", err
+		}
+		return result["id"], nil
 	}
-	return memID
+	return memID, nil
 }

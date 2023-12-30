@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -69,18 +72,41 @@ func (p *TomatickMemento) askToContinue() bool {
 	return answer
 }
 
+func (p *TomatickMemento) createAndSetMemID() {
+	memTitle := fmt.Sprintf("# Tomatick Workday | %s\n#workday #tomatick\n", time.Now().Format("02-01-2006"))
+	memID, err := p.memClient.CreateMem(memTitle)
+
+	if err != nil {
+		fmt.Println(p.auroraInstance.Bold(p.auroraInstance.Red("Error creating MemAI entry: ")), err)
+		return
+	}
+
+	p.memID = memID
+}
+
+func (p *TomatickMemento) asyncAppendToMem(cycleSummary string) {
+	_, err := p.memClient.AppendToMem(p.memID, cycleSummary)
+
+	if err != nil {
+		fmt.Println(p.auroraInstance.Bold(p.auroraInstance.Red("Error appending to MemAI: ")), err)
+	}
+
+}
+
 func (p *TomatickMemento) runTomatickMementoCycle() {
 	if p.memID == "" {
-		p.memID = p.memClient.CreateMem(fmt.Sprintf("# Tomatick Workday | %s\n#workday #tomatick\n", time.Now().Format("02-01-2006")))
+		p.createAndSetMemID()
 	}
 
 	tasks := p.captureTasks()
 	p.startTimer(p.cfg.TomatickMementoDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("Tick Tock Tick Tock...")).String())
+	p.playSound()
 
 	completedTasks := p.markTasksComplete(tasks)
 	reflections := p.captureReflections()
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
-	p.memClient.AppendToMem(p.memID, cycleSummary)
+
+	go p.asyncAppendToMem(cycleSummary)
 
 	p.takeShortBreak()
 }
@@ -143,8 +169,6 @@ func (p *TomatickMemento) startTimer(duration time.Duration, message string) {
 	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue(message)))
 
 	p.progress(duration)
-
-	playSound()
 }
 
 func (p *TomatickMemento) progress(duration time.Duration) {
@@ -170,14 +194,36 @@ func (p *TomatickMemento) progress(duration time.Duration) {
 
 func (p *TomatickMemento) takeShortBreak() {
 	p.startTimer(p.cfg.ShortBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightGreen("\nOn short break...")).String())
+	p.playSound()
 }
 
 func (p *TomatickMemento) takeLongBreak() {
 	p.startTimer(p.cfg.LongBreakDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("\nTomatickMementos long cycle complete! On long break...")).String())
+	p.playSound()
 }
 
-func playSound() {
-	// todo: Add sound playing logic here
+func (p *TomatickMemento) playSound() {
+	soundPath := filepath.Join("assets", "softbeep.mp3")
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "darwin":
+		// Use 'afplay' on macOS
+		cmd = exec.Command("afplay", soundPath)
+	case "linux":
+		// Use 'aplay' on Linux, works with WAV files. (may need to convert mp3 to wav?)
+		cmd = exec.Command("aplay", soundPath)
+	case "windows":
+		// Use PowerShell command on Windows
+		cmd = exec.Command("powershell", "-c", "(New-Object Media.SoundPlayer '"+soundPath+"').PlaySync();")
+	}
+
+	if cmd != nil {
+		err := cmd.Run()
+		if err != nil {
+			fmt.Println("Error playing sound:", err)
+		}
+	}
 }
 
 func displayWelcomeMessage(au aurora.Aurora) {
