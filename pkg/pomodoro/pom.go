@@ -47,7 +47,7 @@ func (p *TomatickMemento) StartCycle() {
 	}
 
 	for {
-		if p.cyclesSinceLastLongBreak >= p.cfg.CyclesBeforeLongBreak {
+		if p.cyclesSinceLastLongBreak > p.cfg.CyclesBeforeLongBreak {
 			p.takeLongBreak()
 			p.cyclesSinceLastLongBreak = 0
 		} else {
@@ -108,7 +108,9 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 
 	go p.asyncAppendToMem(cycleSummary)
 
-	p.takeShortBreak()
+	if p.cyclesSinceLastLongBreak <= p.cfg.CyclesBeforeLongBreak {
+		p.takeShortBreak()
+	}
 }
 
 func (p *TomatickMemento) captureTasks() []string {
