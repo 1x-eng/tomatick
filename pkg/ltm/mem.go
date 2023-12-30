@@ -14,6 +14,11 @@ type MemAI struct {
 	config *config.Config
 }
 
+type MemResponse struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}
+
 func NewMemAI(cfg *config.Config) *MemAI {
 	return &MemAI{
 		client: &http.Client{},
@@ -30,6 +35,8 @@ func (m *MemAI) AppendToMem(memID, content string) (string, error) {
 }
 
 func (m *MemAI) postRequest(url, content, memID string) (string, error) {
+	var memResponse MemResponse
+
 	requestBody, _ := json.Marshal(map[string]string{"content": content})
 
 	request, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
@@ -43,12 +50,16 @@ func (m *MemAI) postRequest(url, content, memID string) (string, error) {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API request failed with status code: %d", response.StatusCode)
+	}
+
+	if err := json.NewDecoder(response.Body).Decode(&memResponse); err != nil {
+		return "", err
+	}
+
 	if memID == "" {
-		var result map[string]string
-		if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
-			return "", err
-		}
-		return result["id"], nil
+		return memResponse.ID, nil
 	}
 	return memID, nil
 }
