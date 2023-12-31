@@ -47,19 +47,25 @@ func (p *TomatickMemento) StartCycle() {
 	}
 
 	for {
-		if p.cyclesSinceLastLongBreak > p.cfg.CyclesBeforeLongBreak {
+		p.runTomatickMementoCycle()
+
+		if p.cyclesSinceLastLongBreak >= (p.cfg.CyclesBeforeLongBreak - 1) {
 			p.takeLongBreak()
 			p.cyclesSinceLastLongBreak = 0
 		} else {
-			p.runTomatickMementoCycle()
+			if p.cyclesSinceLastLongBreak < p.cfg.CyclesBeforeLongBreak {
+				p.takeShortBreak()
+			}
 			p.cyclesSinceLastLongBreak++
 		}
 
+		p.cycleCount++
+
 		if !p.askToContinue() {
 			fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightGreen(("\nTomatick workday completed. Goodbye!"))))
+			p.printTotalHoursWorked()
 			break
 		}
-		p.cycleCount++
 	}
 }
 
@@ -107,10 +113,6 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
 
 	go p.asyncAppendToMem(cycleSummary)
-
-	if p.cyclesSinceLastLongBreak <= p.cfg.CyclesBeforeLongBreak {
-		p.takeShortBreak()
-	}
 }
 
 func (p *TomatickMemento) captureTasks() []string {
@@ -226,6 +228,18 @@ func (p *TomatickMemento) playSound() {
 			fmt.Println("Error playing sound:", err)
 		}
 	}
+}
+
+func (p *TomatickMemento) printTotalHoursWorked() {
+	totalDuration := p.cfg.TomatickMementoDuration * time.Duration(p.cycleCount)
+	totalHours := totalDuration.Hours()
+
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("\n\nTotal TomatickMemento cycles completed: ")), p.auroraInstance.Bold(p.auroraInstance.BrightYellow(p.cycleCount)))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("Total hours worked: ")), p.auroraInstance.Bold(p.auroraInstance.BrightYellow(fmt.Sprintf("%.2f hours", totalHours))))
+
+	workHoursSummary := fmt.Sprintf("#### Total Hours Worked: %.2f hours\n#### Total Cycles Completed: %d\n***", totalHours, p.cycleCount)
+	// Not running this async, as we want to wait for it to complete before exiting
+	p.asyncAppendToMem(workHoursSummary)
 }
 
 func displayWelcomeMessage(au aurora.Aurora) {
