@@ -1,12 +1,11 @@
 package pomodoro
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/1x-eng/tomatick/config"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/chzyer/readline"
 	"github.com/logrusorgru/aurora"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
@@ -116,19 +116,99 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 }
 
 func (p *TomatickMemento) captureTasks() []string {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow(("\nRemember the 80:20 rule and enter tasks that you plan to work on (one per line), type 'done' to finish:"))))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow("\n=== Task Entry Mode ===")))
+	fmt.Println(p.auroraInstance.BrightYellow("• Type a task and press Enter to add it"))
+	fmt.Println(p.auroraInstance.BrightYellow("• Type 'done' when you've finished adding tasks"))
+	fmt.Println(p.auroraInstance.BrightYellow("• Type 'help' to see all available commands"))
 
-	scanner := bufio.NewScanner(os.Stdin)
 	var tasks []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.ToLower(line) == "done" {
-			fmt.Println()
-			break
+	rl, _ := readline.New(p.auroraInstance.BrightGreen("➤ ").String())
+	defer rl.Close()
+
+	for {
+		p.displayTasks(tasks)
+		input, _ := rl.Readline()
+		input = strings.TrimSpace(input)
+
+		switch strings.ToLower(input) {
+		case "done":
+			if len(tasks) == 0 {
+				fmt.Println(p.auroraInstance.Red("❗ Please add at least one task before finishing."))
+				continue
+			}
+			return tasks
+		case "help":
+			p.displayHelp()
+		case "list":
+			continue // Tasks will be displayed at the start of the loop
+		case "":
+			fmt.Println(p.auroraInstance.Red("❗ Task cannot be empty. Please try again."))
+		default:
+			if strings.HasPrefix(input, "edit ") {
+				p.editTask(&tasks, input)
+			} else if strings.HasPrefix(input, "remove ") {
+				p.removeTask(&tasks, input)
+			} else {
+				tasks = append(tasks, input)
+				fmt.Println(p.auroraInstance.Green("✓ Task added successfully."))
+			}
 		}
-		tasks = append(tasks, line)
 	}
-	return tasks
+}
+
+func (p *TomatickMemento) editTask(tasks *[]string, input string) {
+	parts := strings.SplitN(input, " ", 3)
+	if len(parts) != 3 {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid edit command. Use 'edit N new_task_description'"))
+		return
+	}
+	index, err := strconv.Atoi(parts[1])
+	if err != nil || index < 1 || index > len(*tasks) {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid task number. Please try again."))
+		return
+	}
+	(*tasks)[index-1] = parts[2]
+	fmt.Println(p.auroraInstance.Green("✓ Task updated successfully."))
+}
+
+func (p *TomatickMemento) removeTask(tasks *[]string, input string) {
+	parts := strings.SplitN(input, " ", 2)
+	if len(parts) != 2 {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid remove command. Use 'remove N'"))
+		return
+	}
+	index, err := strconv.Atoi(parts[1])
+	if err != nil || index < 1 || index > len(*tasks) {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid task number. Please try again."))
+		return
+	}
+	*tasks = append((*tasks)[:index-1], (*tasks)[index:]...)
+	fmt.Println(p.auroraInstance.Green("✓ Task removed successfully."))
+}
+
+func (p *TomatickMemento) displayTasks(tasks []string) {
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("\n--- Current Tasks ---")))
+	if len(tasks) == 0 {
+		fmt.Println(p.auroraInstance.Italic("No tasks yet. Start typing to add tasks."))
+	} else {
+		for i, task := range tasks {
+			fmt.Printf("%s %d. %s\n",
+				p.auroraInstance.BrightCyan("•"),
+				i+1,
+				task)
+		}
+	}
+	fmt.Println(p.auroraInstance.BrightCyan("---------------------"))
+}
+
+func (p *TomatickMemento) displayHelp() {
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow("\n=== Available Commands ===")))
+	fmt.Println(p.auroraInstance.BrightYellow("• Type a task: Add a new task"))
+	fmt.Println(p.auroraInstance.BrightYellow("• done: Finish adding tasks"))
+	fmt.Println(p.auroraInstance.BrightYellow("• list: Display current tasks"))
+	fmt.Println(p.auroraInstance.BrightYellow("• edit N new_description: Edit task N"))
+	fmt.Println(p.auroraInstance.BrightYellow("• remove N: Remove task N"))
+	fmt.Println(p.auroraInstance.BrightYellow("• help: Show this help message"))
 }
 
 func (p *TomatickMemento) markTasksComplete(tasks []string) string {
@@ -156,11 +236,20 @@ func (p *TomatickMemento) markTasksComplete(tasks []string) string {
 func (p *TomatickMemento) captureReflections() string {
 	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightWhite(("\nReflect and record your wins & distractions (you can use multiple lines, type 'done' to finish):"))))
 
-	scanner := bufio.NewScanner(os.Stdin)
+	rl, err := readline.New("> ")
+	if err != nil {
+		fmt.Println("Error initializing readline:", err)
+		return ""
+	}
+	defer rl.Close()
+
 	var reflections []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.ToLower(line) == "done" {
+	for {
+		line, err := rl.Readline()
+		if err != nil { // io.EOF, readline.ErrInterrupt
+			break
+		}
+		if strings.ToLower(strings.TrimSpace(line)) == "done" {
 			fmt.Println()
 			break
 		}

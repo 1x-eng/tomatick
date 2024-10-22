@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/chzyer/readline v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/spf13/cobra v1.8.0
