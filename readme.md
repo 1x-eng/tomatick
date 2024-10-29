@@ -1,46 +1,48 @@
 # Tomatick Memento
 
-Another pomodoro timer, but this one is powered by a sprinkle of cognitive optimization algorithms :brain: :rocket:
+Yet another pomodoro timer (yes, really) – but this one's your accountability buddy with just enough cognitive wizardry to keep perfectionists from disappearing down the rabbit hole of endless optimizations. Because sometimes "good enough" today beats "perfect" never. :brain: :rocket:
 
 ## Core Features
 
-- **Interactive CLI Interface**: Elegant terminal-based interface with dynamic colors and visual feedback
+- **Interactive CLI Interface**: A terminal interface that doesn't suck, with colors and all that jazz
+
 - **AI-Powered Task Management**:
-  - Cognitive load analysis
-  - Neural pattern recognition for task optimization
-  - Predictive burnout prevention
-  - Strategic momentum building
-  - Flow state optimization
+  - Spots when you're overdoing it
+  - Learns your work patterns
+  - Stops you before you burn out
+  - Keeps momentum going
+  - Gets you into flow (and keeps you there)
 
 - **Context-Aware Sessions**:
-  - Smart context collection and management
-  - Task-energy alignment optimization
-  - Progress tracking across sessions
-  - Cognitive load distribution analysis
+  - Tracks what you're actually doing
+  - Matches tasks to when you're actually alert
+  - Keeps tabs on progress
+  - Tells you when you're taking on too much
 
 - **Intelligent Task Suggestions**:
-  - AI-generated task recommendations
-  - Optimized for 25-minute focus sessions
-  - Considers previous performance patterns
-  - Maintains strategic momentum
+  - AI suggestions that make sense
+  - Built for 25-minute chunks
+  - Uses your past performance (good and bad)
+  - Keeps you moving forward
 
 - **Deep Performance Analysis**:
-  - Real-time cognitive load monitoring
-  - Flow state entry/exit optimization
-  - Energy expenditure tracking
-  - Strategic trajectory computation
+  - Tracks mental energy in real-time
+  - Optimizes your flow state
+  - Monitors energy levels
+  - Shows actual progress
 
 - **Sustainable Progress**:
-  - Built-in burnout prevention
-  - Recovery-progress ratio balancing
-  - Strategic deload timing
-  - Mental resource regeneration
+  - Prevents you from burning out
+  - Balances work and breaks
+  - Tells you when to slow down
+  - Helps you recharge properly
 
 - **Persistent Memory Integration**:
-  - Seamless `mem.ai` integration
-  - Markdown-formatted session logs
-  - Comprehensive progress tracking
-  - Performance pattern analysis
+  - Works with `mem.ai` because you'll forget
+  - Clean markdown logs
+  - Tracks everything important
+  - Finds useful patterns
+
 
 ## Getting Started
 
@@ -97,14 +99,14 @@ Another pomodoro timer, but this one is powered by a sprinkle of cognitive optim
 
 ## How It Works
 
-Tomatick Memento uses advanced cognitive optimization algorithms to help you maintain peak performance while preventing burnout. The AI system:
+Tomatick Memento uses advanced cognitive optimization algorithms to help you maintain peak performance while preventing burnout. The system:
 
-- Analyzes your work patterns
-- Optimizes task sequencing
-- Monitors cognitive load
-- Prevents decision fatigue
-- Maintains strategic momentum
-- Ensures sustainable progress
+- Analyzes your work patterns and adapts to your natural rhythms
+- Sequences tasks based on cognitive demand and energy states
+- Monitors mental load to prevent overextension
+- Reduces decision overhead through intelligent suggestions
+- Maintains productive momentum without the burnout
+- Ensures consistent, sustainable progress
 
 Every suggestion and analysis is precision-engineered to help you achieve maximum impact while maintaining optimal energy levels.
 
