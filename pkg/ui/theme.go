@@ -52,45 +52,57 @@ func NewTheme() *Theme {
 		Styles: ThemeStyles{
 			Title: lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#FF79C6")).
+				Foreground(lipgloss.Color("#E0B0FF")).
 				MarginBottom(1).
 				Padding(1, 0),
 
 			Subtitle: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#50FA7B")).
+				Foreground(lipgloss.Color("#9DC8C8")).
 				MarginBottom(1),
 
 			TaskItem: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#8BE9FD")).
+				Foreground(lipgloss.Color("#D4E2D4")).
 				PaddingLeft(2),
 
 			TaskNumber: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FFB86C")).
+				Foreground(lipgloss.Color("#DEBACE")).
 				Bold(true),
 
 			InfoText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#6272A4")),
+				Foreground(lipgloss.Color("#B4C8EA")),
 
 			ErrorText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FF5555")).
+				Foreground(lipgloss.Color("#FFB4B4")).
 				Bold(true),
 
 			SuccessText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#50FA7B")).
+				Foreground(lipgloss.Color("#BADEB3")).
 				Bold(true),
 
 			Timer: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#BD93F9")).
+				Foreground(lipgloss.Color("#E6CCB2")).
 				Bold(true).
 				Padding(0, 1),
 
+			SystemInstruction: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#C7B7A3")).
+				Italic(true),
+
+			SystemMessage: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#B5B9FF")).
+				Italic(true),
+
 			Progress: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FF79C6")).
+				Foreground(lipgloss.Color("#D7C0AE")).
 				Bold(true),
 
 			Spinner: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#8BE9FD")).
+				Foreground(lipgloss.Color("#C4B5FD")).
 				Bold(true),
+
+			AIMessage: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#B8E7E1")).
+				Italic(true),
 		},
 		Emoji: ThemeEmoji{
 			TaskComplete:   "✅",

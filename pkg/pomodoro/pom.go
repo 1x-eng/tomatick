@@ -24,6 +24,7 @@ import (
 	"github.com/1x-eng/tomatick/pkg/context"
 	"github.com/1x-eng/tomatick/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var commandInstructions = []struct {
@@ -85,7 +86,7 @@ Your session context helps the AI:
 • Prevent context switching
 • Optimize for sustainable progress
 
-The AI uses this information to:
+Your copilot uses this information to:
 • Calibrate task difficulty
 • Manage cognitive load
 • Maintain strategic momentum
@@ -106,7 +107,7 @@ The AI uses this information to:
 
 			// Confirm context collection
 			fmt.Println(p.theme.Styles.Subtitle.Render("\n✓ Context collected successfully"))
-			fmt.Println(p.theme.Styles.InfoText.Render("AI system initialized with your session context"))
+			fmt.Println(p.theme.Styles.InfoText.Render("Copilot initialized with your session context"))
 			fmt.Println()
 		}
 	}
@@ -177,7 +178,9 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	reflections := p.captureReflections()
 
 	// Initialize the spinner
-	spinner := ui.NewSpinner(p.theme.Styles.Spinner)
+	spinner := ui.NewSpinner(p.theme.Styles.Spinner.
+		Foreground(lipgloss.Color("#C4B5FD")).
+		Bold(true))
 	done := make(chan bool)
 
 	// Start spinner in a goroutine
@@ -205,14 +208,14 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
 	} else {
 		fmt.Println(p.theme.Styles.Title.Render(
-			p.theme.Styles.Title.Render("\n=== AI Analysis ===\n" + analysis),
+			p.theme.Styles.Title.Render("\n=== Copilot's Analysis ===\n" + analysis),
 		))
 		p.lastAnalysis = analysis
 	}
 
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
 	if analysis != "" {
-		cycleSummary += "\n### AI Analysis\n" + analysis + "\n*\n"
+		cycleSummary += "\n### Copilot's Analysis\n" + analysis + "\n*\n"
 	}
 
 	go p.asyncAppendToMem(cycleSummary)
@@ -251,7 +254,9 @@ func (p *TomatickMemento) captureTasks() []string {
 			}
 			return tasks
 		case "suggest":
-			spinner := ui.NewSpinner(p.theme.Styles.Spinner)
+			spinner := ui.NewSpinner(p.theme.Styles.Spinner.
+				Foreground(lipgloss.Color("#C4B5FD")).
+				Bold(true))
 			done := make(chan bool)
 
 			// Start spinner in goroutine
@@ -304,7 +309,7 @@ func (p *TomatickMemento) captureTasks() []string {
 }
 
 func (p *TomatickMemento) displaySuggestions(suggestions []string) {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue("\n=== AI Suggestions ===")))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue("\n=== Copilot's Suggestions ===")))
 	for i, suggestion := range suggestions {
 		fmt.Printf("%s %s\n",
 			p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1)),
@@ -597,5 +602,5 @@ func displayWelcomeMessage(au aurora.Aurora) {
 func (p *TomatickMemento) FlushSuggestions() {
 	p.currentSuggestions = []string{}
 	p.lastAnalysis = ""
-	fmt.Println(p.auroraInstance.Green("✓ AI suggestions and analysis cache flushed successfully."))
+	fmt.Println(p.auroraInstance.Green("✓ Copilot suggestions and analysis cache flushed successfully."))
 }
