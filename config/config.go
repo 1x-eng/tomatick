@@ -14,6 +14,7 @@ type Config struct {
 	CyclesBeforeLongBreak   int
 	MEMAIAPIToken           string
 	ContextDir              string
+	PerplexityAPIToken      string
 }
 
 func LoadConfig() (*Config, error) {
@@ -59,5 +60,6 @@ func LoadConfig() (*Config, error) {
 		CyclesBeforeLongBreak:   cyclesBeforeLongBreak,
 		MEMAIAPIToken:           os.Getenv("MEM_AI_API_TOKEN"),
 		ContextDir:              contextDir,
+		PerplexityAPIToken:      os.Getenv("PERPLEXITY_API_TOKEN"),
 	}, nil
 }

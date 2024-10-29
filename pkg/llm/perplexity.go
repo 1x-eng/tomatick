@@ -50,37 +50,42 @@ func (p *PerplexityAI) GetResponse(messages []Message) (string, error) {
 
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error marshaling request: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+p.config.PerplexityAPIToken)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error making request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error reading response: %w", err)
+	}
+
+	// If not 200, try to get error message
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var perplexityResp PerplexityResponse
-	err = json.Unmarshal(body, &perplexityResp)
-	if err != nil {
-		return "", err
+	if err := json.Unmarshal(body, &perplexityResp); err != nil {
+		return "", fmt.Errorf("error unmarshaling response: %w\nResponse body: %s", err, string(body))
 	}
 
-	if len(perplexityResp.Choices) > 0 {
-		return perplexityResp.Choices[0].Message.Content, nil
+	if len(perplexityResp.Choices) == 0 {
+		return "", fmt.Errorf("no choices in response: %s", string(body))
 	}
 
-	return "", fmt.Errorf("no response from Perplexity AI")
+	return perplexityResp.Choices[0].Message.Content, nil
 }

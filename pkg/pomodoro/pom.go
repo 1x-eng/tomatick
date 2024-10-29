@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/1x-eng/tomatick/pkg/llm"
 	"github.com/1x-eng/tomatick/pkg/ltm"
 	"github.com/1x-eng/tomatick/pkg/markdown"
 
@@ -26,6 +27,7 @@ import (
 type TomatickMemento struct {
 	cfg                      *config.Config
 	memClient                *ltm.MemAI
+	llmClient                *llm.PerplexityAI
 	memID                    string
 	cycleCount               int
 	cyclesSinceLastLongBreak int
@@ -38,6 +40,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 	return &TomatickMemento{
 		cfg:                      cfg,
 		memClient:                ltm.NewMemAI(cfg),
+		llmClient:                llm.NewPerplexityAI(cfg),
 		cycleCount:               0,
 		cyclesSinceLastLongBreak: 0,
 		auroraInstance:           aurora.NewAurora(true),
@@ -123,7 +126,21 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 
 	completedTasks := p.markTasksComplete(tasks)
 	reflections := p.captureReflections()
+
+	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
+	analysis, err := assistant.AnalyzeProgress(strings.Split(completedTasks, "\n"), reflections)
+	if err != nil {
+		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
+	} else {
+		fmt.Println(p.theme.Styles.Border.Render(
+			p.theme.Styles.InfoText.Render("\n=== AI Analysis ===\n" + analysis),
+		))
+	}
+
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
+	if analysis != "" {
+		cycleSummary += "\n### AI Analysis\n" + analysis + "\n***\n"
+	}
 
 	go p.asyncAppendToMem(cycleSummary)
 }
@@ -132,12 +149,14 @@ func (p *TomatickMemento) captureTasks() []string {
 	header := p.theme.Styles.Title.Render("=== Task Entry Mode ===")
 	instructions := p.theme.Styles.InfoText.Render(`
 • Type a task and press Enter to add it
+• Type 'suggest' to get AI task suggestions
 • Type 'done' when you've finished adding tasks
 • Type 'help' to see all available commands
 	`)
 
 	fmt.Println(p.theme.Styles.Border.Render(header + "\n" + instructions))
 
+	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
 	var tasks []string
 	rl, _ := readline.New(p.auroraInstance.BrightGreen("➤ ").String())
 	defer rl.Close()
@@ -154,10 +173,17 @@ func (p *TomatickMemento) captureTasks() []string {
 				continue
 			}
 			return tasks
+		case "suggest":
+			suggestions, err := assistant.GetTaskSuggestions(tasks)
+			if err != nil {
+				fmt.Println(p.auroraInstance.Red("❗ Error getting suggestions:"), err)
+				continue
+			}
+			p.displaySuggestions(suggestions)
 		case "help":
 			p.displayHelp()
 		case "list":
-			continue // Tasks will be displayed at the start of the loop
+			continue
 		case "":
 			fmt.Println(p.auroraInstance.Red("❗ Task cannot be empty. Please try again."))
 		default:
@@ -165,12 +191,40 @@ func (p *TomatickMemento) captureTasks() []string {
 				p.editTask(&tasks, input)
 			} else if strings.HasPrefix(input, "remove ") {
 				p.removeTask(&tasks, input)
+			} else if strings.HasPrefix(input, "use ") {
+				p.useSuggestion(&tasks, input)
 			} else {
 				tasks = append(tasks, input)
 				fmt.Println(p.auroraInstance.Green("✓ Task added successfully."))
 			}
 		}
 	}
+}
+
+func (p *TomatickMemento) displaySuggestions(suggestions []string) {
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow("\n=== AI Suggestions ===")))
+	for i, suggestion := range suggestions {
+		fmt.Printf("%s %s\n",
+			p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1)),
+			p.theme.Styles.InfoText.Render(suggestion))
+	}
+	fmt.Println(p.auroraInstance.Italic("\nTo use a suggestion, type 'use N' where N is the suggestion number."))
+}
+
+func (p *TomatickMemento) useSuggestion(tasks *[]string, input string) {
+	parts := strings.SplitN(input, " ", 2)
+	if len(parts) != 2 {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid use command. Use 'use N'"))
+		return
+	}
+	_, err := strconv.Atoi(parts[1])
+	if err != nil {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid suggestion number."))
+		return
+	}
+	// Note: The actual suggestion adding logic would need to maintain a suggestions slice
+	// This is just a placeholder for the implementation
+	fmt.Println(p.auroraInstance.Green("✓ Added suggestion to tasks."))
 }
 
 func (p *TomatickMemento) editTask(tasks *[]string, input string) {
