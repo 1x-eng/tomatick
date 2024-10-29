@@ -22,6 +22,7 @@ type ThemeStyles struct {
 	Timer       lipgloss.Style
 	Border      lipgloss.Style
 	Progress    lipgloss.Style
+	Spinner     lipgloss.Style
 }
 
 func NewTheme() *Theme {
@@ -72,6 +73,10 @@ func NewTheme() *Theme {
 
 			Progress: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#FF6B6B")).
+				Bold(true),
+
+			Spinner: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#FFE66D")).
 				Bold(true),
 		},
 	}

@@ -174,7 +174,26 @@ func (p *TomatickMemento) captureTasks() []string {
 			}
 			return tasks
 		case "suggest":
+			spinner := ui.NewSpinner(p.theme.Styles.Spinner)
+			done := make(chan bool)
+
+			// Start spinner in goroutine
+			go func() {
+				for {
+					select {
+					case <-done:
+						return
+					default:
+						fmt.Printf("\r%s Getting suggestions...", spinner.Next())
+						time.Sleep(100 * time.Millisecond)
+					}
+				}
+			}()
+
 			suggestions, err := assistant.GetTaskSuggestions(tasks)
+			done <- true
+			fmt.Print("\r") // Clear spinner line
+
 			if err != nil {
 				fmt.Println(p.auroraInstance.Red("❗ Error getting suggestions:"), err)
 				continue
