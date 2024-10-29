@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -12,6 +13,8 @@ type Config struct {
 	LongBreakDuration       time.Duration
 	CyclesBeforeLongBreak   int
 	MEMAIAPIToken           string
+	ContextDir              string
+	PerplexityAPIToken      string
 }
 
 func LoadConfig() (*Config, error) {
@@ -41,11 +44,22 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	contextDir := os.Getenv("TOMATICK_CONTEXT_DIR")
+	if contextDir == "" {
+		contextDir = getDefaultContextDir()
+	}
+
+	if err := ensureDirectoryExists(contextDir); err != nil {
+		return nil, fmt.Errorf("failed to create context directory: %w", err)
+	}
+
 	return &Config{
 		TomatickMementoDuration: pomoDuration,
 		ShortBreakDuration:      shortBreak,
 		LongBreakDuration:       longBreak,
 		CyclesBeforeLongBreak:   cyclesBeforeLongBreak,
 		MEMAIAPIToken:           os.Getenv("MEM_AI_API_TOKEN"),
+		ContextDir:              contextDir,
+		PerplexityAPIToken:      os.Getenv("PERPLEXITY_API_TOKEN"),
 	}, nil
 }
