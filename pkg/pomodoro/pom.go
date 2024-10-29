@@ -21,6 +21,8 @@ import (
 	"github.com/vbauerster/mpb/v7/decor"
 
 	"github.com/1x-eng/tomatick/pkg/context"
+	"github.com/1x-eng/tomatick/pkg/copilot"
+	"github.com/1x-eng/tomatick/pkg/ui"
 )
 
 type TomatickMemento struct {
@@ -31,15 +33,27 @@ type TomatickMemento struct {
 	cyclesSinceLastLongBreak int
 	auroraInstance           aurora.Aurora
 	sessionContext           string
+	copilot                  copilot.Service
+	uiManager                *ui.Manager
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
+	au := aurora.NewAurora(true)
+	uiManager := ui.NewManager(au)
+
+	copilotService, err := copilot.NewCopilotService(&cfg.Copilot)
+	if err != nil {
+		fmt.Printf("Warning: Copilot initialization failed: %v\n", err)
+	}
+
 	return &TomatickMemento{
 		cfg:                      cfg,
 		memClient:                ltm.NewMemAI(cfg),
 		cycleCount:               0,
 		cyclesSinceLastLongBreak: 0,
-		auroraInstance:           aurora.NewAurora(true),
+		auroraInstance:           au,
+		copilot:                  copilotService,
+		uiManager:                uiManager,
 	}
 }
 

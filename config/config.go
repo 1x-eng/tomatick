@@ -7,6 +7,19 @@ import (
 	"time"
 )
 
+type LLMConfig struct {
+	Provider   string // e.g., "openai", "anthropic"
+	Model      string // e.g., "gpt-4", "claude-3"
+	APIKey     string
+	Parameters map[string]any // Provider-specific parameters
+}
+
+type CopilotConfig struct {
+	Enabled     bool
+	DefaultMode string // "lead" or "follow"
+	LLM         LLMConfig
+}
+
 type Config struct {
 	TomatickMementoDuration time.Duration
 	ShortBreakDuration      time.Duration
@@ -14,6 +27,7 @@ type Config struct {
 	CyclesBeforeLongBreak   int
 	MEMAIAPIToken           string
 	ContextDir              string
+	Copilot                 CopilotConfig
 }
 
 func LoadConfig() (*Config, error) {
@@ -52,6 +66,24 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to create context directory: %w", err)
 	}
 
+	// Load Copilot Configuration
+	copilotConfig := CopilotConfig{
+		Enabled:     getEnvBool("COPILOT_ENABLED", true),
+		DefaultMode: getEnvString("COPILOT_MODE", "follow"),
+		LLM: LLMConfig{
+			Provider: getEnvString("LLM_PROVIDER", "openai"),
+			Model:    getEnvString("LLM_MODEL", "gpt-4"),
+			APIKey:   os.Getenv("OPENAI_API_KEY"),
+			Parameters: map[string]any{
+				"temperature":       getEnvFloat("LLM_TEMPERATURE", 0.7),
+				"max_tokens":        getEnvInt("LLM_MAX_TOKENS", 150),
+				"top_p":             getEnvFloat("LLM_TOP_P", 1.0),
+				"presence_penalty":  getEnvFloat("LLM_PRESENCE_PENALTY", 0.0),
+				"frequency_penalty": getEnvFloat("LLM_FREQUENCY_PENALTY", 0.0),
+			},
+		},
+	}
+
 	return &Config{
 		TomatickMementoDuration: pomoDuration,
 		ShortBreakDuration:      shortBreak,
@@ -59,5 +91,42 @@ func LoadConfig() (*Config, error) {
 		CyclesBeforeLongBreak:   cyclesBeforeLongBreak,
 		MEMAIAPIToken:           os.Getenv("MEM_AI_API_TOKEN"),
 		ContextDir:              contextDir,
+		Copilot:                 copilotConfig,
 	}, nil
+}
+
+// Helper functions for environment variables
+func getEnvBool(key string, defaultVal bool) bool {
+	if val, exists := os.LookupEnv(key); exists {
+		b, err := strconv.ParseBool(val)
+		if err == nil {
+			return b
+		}
+	}
+	return defaultVal
+}
+
+func getEnvString(key, defaultVal string) string {
+	if val, exists := os.LookupEnv(key); exists {
+		return val
+	}
+	return defaultVal
+}
+
+func getEnvFloat(key string, defaultVal float64) float64 {
+	if val, exists := os.LookupEnv(key); exists {
+		if f, err := strconv.ParseFloat(val, 64); err == nil {
+			return f
+		}
+	}
+	return defaultVal
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	if val, exists := os.LookupEnv(key); exists {
+		if i, err := strconv.Atoi(val); err == nil {
+			return i
+		}
+	}
+	return defaultVal
 }
