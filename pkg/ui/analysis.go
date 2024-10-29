@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -25,14 +26,18 @@ func (ap *AnalysisPresenter) parseAnalysis(analysis string) map[string][]string 
 
 	lines := strings.Split(analysis, "\n")
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
 		if strings.HasPrefix(line, "##") {
 			if currentSection != "" {
 				sections[currentSection] = currentContent
 			}
 			currentSection = strings.TrimSpace(strings.TrimPrefix(line, "##"))
 			currentContent = []string{}
-		} else if strings.TrimSpace(line) != "" {
-			currentContent = append(currentContent, strings.TrimSpace(line))
+		} else if line != "" {
+			// Normalize bullet points and numbering
+			line = ap.normalizeListItem(line)
+			currentContent = append(currentContent, line)
 		}
 	}
 	if currentSection != "" {
@@ -41,33 +46,44 @@ func (ap *AnalysisPresenter) parseAnalysis(analysis string) map[string][]string 
 	return sections
 }
 
+func (ap *AnalysisPresenter) normalizeListItem(line string) string {
+	// Remove any existing bullets or numbers
+	line = strings.TrimSpace(line)
+	line = strings.TrimPrefix(line, "•")
+	line = strings.TrimPrefix(line, "-")
+	line = strings.TrimPrefix(line, "*")
+
+	// Remove numbered prefixes (e.g., "1.", "2.")
+	if matched, _ := regexp.MatchString(`^\d+\.`, line); matched {
+		line = regexp.MustCompile(`^\d+\.`).ReplaceAllString(line, "")
+	}
+
+	return strings.TrimSpace(line)
+}
+
 func (ap *AnalysisPresenter) formatSections(sections map[string][]string) string {
 	var sb strings.Builder
 
-	sb.WriteString(ap.theme.Styles.Subtitle.Render("\n🤖 Your copilot's analysis\n"))
+	// Initial title with single newline
+	sb.WriteString(ap.theme.Styles.Subtitle.Render("🤖 Your copilot's analysis"))
 
 	for section, content := range sections {
-		sb.WriteString(ap.theme.Styles.TaskNumber.Render(
-			fmt.Sprintf("%s %s\n",
-				ap.theme.Emoji.Section,
-				(section))))
+		// Add section header with consistent spacing
+		sb.WriteString(fmt.Sprintf("\n\n%s %s",
+			ap.theme.Emoji.Section,
+			ap.theme.Styles.TaskNumber.Render(section)))
 
+		// Process content items
 		for _, line := range content {
 			line = strings.TrimSpace(line)
 			line = strings.ReplaceAll(line, "**", "")
-			line = strings.TrimLeft(line, "#-")
 
 			if line != "" {
-				if strings.HasPrefix(line, "•") {
-					sb.WriteString(line + "\n")
-				} else {
-					sb.WriteString(fmt.Sprintf("%s %s\n",
-						ap.theme.Emoji.Bullet,
-						line))
-				}
+				sb.WriteString(fmt.Sprintf("\n%s %s",
+					ap.theme.Emoji.Bullet,
+					ap.theme.Styles.InfoText.Render(line)))
 			}
 		}
-		sb.WriteString("\n")
 	}
 
 	return sb.String()

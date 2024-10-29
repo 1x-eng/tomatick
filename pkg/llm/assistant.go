@@ -167,7 +167,7 @@ CRITICAL OUTPUT STRUCTURE:
 - Immediate optimization opportunities
 - Primary strategic adjustments required
 
-## Immediate Action Protocol
+## Immediate Action
 - Three precisely engineered next actions
 - Each calibrated for immediate implementation
 - Designed for maximum impact-to-effort ratio
@@ -175,7 +175,13 @@ CRITICAL OUTPUT STRUCTURE:
 ## Deep Analysis
 [Complete neural pathway and performance analysis]
 
-Format with clear Markdown headers (##) ensuring maximum clarity and actionability while maintaining analytical depth.`, a.context, strings.Join(completedTasks, "\n"), reflections)
+FORMATTING RULES:
+- Use single bullet points (no numbers)
+- No nested bullets
+- No extra spacing
+- No markdown formatting
+- One insight per line
+- Keep each point concise, without losing clarity and actionability while maintaining analytical depth.`, a.context, strings.Join(completedTasks, "\n"), reflections)
 
 	messages := []Message{
 		{Role: "system", Content: `You are an advanced cognitive optimization system with neural-level pattern recognition capabilities. Your core functions:
