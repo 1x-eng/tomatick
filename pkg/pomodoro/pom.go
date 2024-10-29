@@ -37,6 +37,7 @@ type TomatickMemento struct {
 	sessionContext           string
 	theme                    *ui.Theme
 	currentSuggestions       []string
+	lastAnalysis             string
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -162,6 +163,7 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 		fmt.Println(p.theme.Styles.Title.Render(
 			p.theme.Styles.Title.Render("\n=== AI Analysis ===\n" + analysis),
 		))
+		p.lastAnalysis = analysis
 	}
 
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
@@ -229,7 +231,7 @@ func (p *TomatickMemento) captureTasks() []string {
 				}
 			}()
 
-			suggestions, err := assistant.GetTaskSuggestions(tasks)
+			suggestions, err := assistant.GetTaskSuggestions(tasks, p.lastAnalysis)
 			done <- true
 			fmt.Print("\r") // Clear spinner line
 
@@ -484,7 +486,7 @@ func displayWelcomeMessage(au aurora.Aurora) {
 	   ██║   ██║   ██║██╔████╔██║███████║   ██║   ██║██║     █████╔╝ 
 	   ██║   ██║   ██║██║╚██╔╝██║██╔══██║   ██║   ██║██║     ██╔═██╗ 
 	   ██║   ╚██████╔╝██║ ╚═╝ ██║██║  ██║   ██║   ██║╚██████╗██║  ██╗
-	   ╚═╝    ╚═══���═╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
+	   ╚═╝    ╚═══╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
 	`
 	fmt.Println(au.Bold(au.BrightMagenta(asciiArt)))
 	fmt.Println()
@@ -492,5 +494,6 @@ func displayWelcomeMessage(au aurora.Aurora) {
 
 func (p *TomatickMemento) FlushSuggestions() {
 	p.currentSuggestions = []string{}
-	fmt.Println(p.auroraInstance.Green("✓ AI suggestions flushed successfully."))
+	p.lastAnalysis = ""
+	fmt.Println(p.auroraInstance.Green("✓ AI suggestions and analysis cache flushed successfully."))
 }
