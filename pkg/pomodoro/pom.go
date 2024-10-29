@@ -17,10 +17,10 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/chzyer/readline"
 	"github.com/logrusorgru/aurora"
-	"github.com/vbauerster/mpb/v7"
-	"github.com/vbauerster/mpb/v7/decor"
 
 	"github.com/1x-eng/tomatick/pkg/context"
+	"github.com/1x-eng/tomatick/pkg/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type TomatickMemento struct {
@@ -31,6 +31,7 @@ type TomatickMemento struct {
 	cyclesSinceLastLongBreak int
 	auroraInstance           aurora.Aurora
 	sessionContext           string
+	theme                    *ui.Theme
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -40,6 +41,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 		cycleCount:               0,
 		cyclesSinceLastLongBreak: 0,
 		auroraInstance:           aurora.NewAurora(true),
+		theme:                    ui.NewTheme(),
 	}
 }
 
@@ -127,10 +129,14 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 }
 
 func (p *TomatickMemento) captureTasks() []string {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow("\n=== Task Entry Mode ===")))
-	fmt.Println(p.auroraInstance.BrightYellow("• Type a task and press Enter to add it"))
-	fmt.Println(p.auroraInstance.BrightYellow("• Type 'done' when you've finished adding tasks"))
-	fmt.Println(p.auroraInstance.BrightYellow("• Type 'help' to see all available commands"))
+	header := p.theme.Styles.Title.Render("=== Task Entry Mode ===")
+	instructions := p.theme.Styles.InfoText.Render(`
+• Type a task and press Enter to add it
+• Type 'done' when you've finished adding tasks
+• Type 'help' to see all available commands
+	`)
+
+	fmt.Println(p.theme.Styles.Border.Render(header + "\n" + instructions))
 
 	var tasks []string
 	rl, _ := readline.New(p.auroraInstance.BrightGreen("➤ ").String())
@@ -198,18 +204,21 @@ func (p *TomatickMemento) removeTask(tasks *[]string, input string) {
 }
 
 func (p *TomatickMemento) displayTasks(tasks []string) {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("\n--- Current Tasks ---")))
+	var sb strings.Builder
+	sb.WriteString(p.theme.Styles.Subtitle.Render("Current Tasks"))
+	sb.WriteString("\n")
+
 	if len(tasks) == 0 {
-		fmt.Println(p.auroraInstance.Italic("No tasks yet. Start typing to add tasks."))
+		sb.WriteString(p.theme.Styles.InfoText.Render("No tasks yet. Start typing to add tasks."))
 	} else {
 		for i, task := range tasks {
-			fmt.Printf("%s %d. %s\n",
-				p.auroraInstance.BrightCyan("•"),
-				i+1,
-				task)
+			taskNum := p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1))
+			taskText := p.theme.Styles.TaskItem.Render(task)
+			sb.WriteString(fmt.Sprintf("%s %s\n", taskNum, taskText))
 		}
 	}
-	fmt.Println(p.auroraInstance.BrightCyan("---------------------"))
+
+	fmt.Println(p.theme.Styles.Border.Render(sb.String()))
 }
 
 func (p *TomatickMemento) displayHelp() {
@@ -270,30 +279,12 @@ func (p *TomatickMemento) captureReflections() string {
 }
 
 func (p *TomatickMemento) startTimer(duration time.Duration, message string) {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue(message)))
-
-	p.progress(duration)
-}
-
-func (p *TomatickMemento) progress(duration time.Duration) {
-	pBar := mpb.New(mpb.WithWidth(60))
-	totalSeconds := int(duration.Seconds())
-	bar := pBar.AddBar(int64(totalSeconds),
-		mpb.PrependDecorators(
-			decor.Name(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("Time elapsed: ")).String()),
-			decor.Elapsed(decor.ET_STYLE_GO, decor.WC{W: 5}),
-		),
-		mpb.AppendDecorators(decor.OnComplete(
-			decor.Spinner(nil, decor.WC{W: 5}), p.auroraInstance.Bold(p.auroraInstance.BrightGreen("Done!")).String(),
-		)),
-	)
-
-	for i := 0; i < totalSeconds; i++ {
-		bar.Increment()
-		time.Sleep(time.Second)
+	model := ui.NewProgressModel(duration, message, p.theme)
+	program := tea.NewProgram(model)
+	if err := program.Start(); err != nil {
+		fmt.Println("Error running timer:", err)
+		return
 	}
-
-	pBar.Wait()
 }
 
 func (p *TomatickMemento) takeShortBreak() {
