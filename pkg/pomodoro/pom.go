@@ -53,6 +53,7 @@ type TomatickMemento struct {
 	sessionContext           string
 	theme                    *ui.Theme
 	currentSuggestions       []string
+	currentTasks             []string
 	lastAnalysis             string
 }
 
@@ -207,9 +208,9 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
 	} else {
-		fmt.Println(p.theme.Styles.Title.Render(
-			p.theme.Styles.Title.Render("\n=== Copilot's Analysis ===\n" + analysis),
-		))
+		presenter := ui.NewAnalysisPresenter(p.theme)
+		formattedAnalysis := presenter.Present(analysis)
+		fmt.Println(formattedAnalysis)
 		p.lastAnalysis = analysis
 	}
 

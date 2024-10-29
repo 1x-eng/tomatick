@@ -201,9 +201,9 @@ OPTIMIZATION PROTOCOLS:
 - Design strategic deload timing
 
 OUTPUT REQUIREMENTS:
-Structure analysis in three precise layers:
+Structure analysis in three precise layers & present exactly in this order:
 1. Executive Summary (Neural-level insights)
-2. Immediate Action Protocol (Engineered next steps)
+2. Immediate Action (Engineered next steps)
 3. Deep Analysis (Complete performance analysis)
 
 Maintain maximum analytical depth while ensuring clarity and actionability in presentation.`},

@@ -24,12 +24,12 @@ func NewSpinner(style lipgloss.Style) *Spinner {
 		frames: []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"},
 		style:  style,
 		messages: []SpinnerMessage{
+			{"Synthesizing data", "📊"},
 			{"Analyzing patterns", "🧠"},
 			{"Processing insights", "✨"},
 			{"Optimizing flow", "🌊"},
 			{"Calibrating focus", "🎯"},
 			{"Enhancing clarity", "💫"},
-			{"Synthesizing data", "📊"},
 			{"Refining suggestions", "💡"},
 			{"Mapping connections", "🔄"},
 			{"Elevating performance", "📈"},

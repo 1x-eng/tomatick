@@ -44,6 +44,9 @@ type ThemeEmoji struct {
 	Stats          string
 	Context        string
 	Sound          string
+	Brain          string
+	Bullet         string
+	Section        string
 }
 
 func NewTheme() *Theme {
@@ -120,6 +123,9 @@ func NewTheme() *Theme {
 			Stats:          "📊",
 			Context:        "🎯",
 			Sound:          "🔔",
+			Brain:          "🧠",
+			Bullet:         "•",
+			Section:        "📋",
 		},
 	}
 }
