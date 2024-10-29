@@ -34,6 +34,7 @@ type TomatickMemento struct {
 	auroraInstance           aurora.Aurora
 	sessionContext           string
 	theme                    *ui.Theme
+	currentSuggestions       []string
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -45,6 +46,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 		cyclesSinceLastLongBreak: 0,
 		auroraInstance:           aurora.NewAurora(true),
 		theme:                    ui.NewTheme(),
+		currentSuggestions:       make([]string, 0),
 	}
 }
 
@@ -198,6 +200,7 @@ func (p *TomatickMemento) captureTasks() []string {
 				fmt.Println(p.auroraInstance.Red("❗ Error getting suggestions:"), err)
 				continue
 			}
+			p.currentSuggestions = suggestions // Store suggestions
 			p.displaySuggestions(suggestions)
 		case "help":
 			p.displayHelp()
@@ -225,7 +228,7 @@ func (p *TomatickMemento) displaySuggestions(suggestions []string) {
 	for i, suggestion := range suggestions {
 		fmt.Printf("%s %s\n",
 			p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1)),
-			p.theme.Styles.InfoText.Render(suggestion))
+			p.theme.Styles.TaskItem.Render(suggestion))
 	}
 	fmt.Println(p.auroraInstance.Italic("\nTo use a suggestion, type 'use N' where N is the suggestion number."))
 }
@@ -236,14 +239,26 @@ func (p *TomatickMemento) useSuggestion(tasks *[]string, input string) {
 		fmt.Println(p.auroraInstance.Red("❗ Invalid use command. Use 'use N'"))
 		return
 	}
-	_, err := strconv.Atoi(parts[1])
+
+	index, err := strconv.Atoi(parts[1])
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("❗ Invalid suggestion number."))
 		return
 	}
-	// Note: The actual suggestion adding logic would need to maintain a suggestions slice
-	// This is just a placeholder for the implementation
-	fmt.Println(p.auroraInstance.Green("✓ Added suggestion to tasks."))
+
+	// Convert to 0-based index
+	index--
+
+	if index < 0 || index >= len(p.currentSuggestions) {
+		fmt.Println(p.auroraInstance.Red("❗ Invalid suggestion number. Please choose a number between 1 and"), len(p.currentSuggestions))
+		return
+	}
+
+	// Add the selected suggestion to tasks
+	*tasks = append(*tasks, p.currentSuggestions[index])
+	fmt.Printf("%s %s\n",
+		p.auroraInstance.Green("✓ Added suggestion to tasks:"),
+		p.theme.Styles.TaskItem.Render(p.currentSuggestions[index]))
 }
 
 func (p *TomatickMemento) editTask(tasks *[]string, input string) {
