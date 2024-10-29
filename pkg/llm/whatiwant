@@ -1,9 +1,0 @@
-@pkg @main.go @cmd 
-given all of this code, I want to implement the following:
-
-- every new tomatick session, will need to ask the user if they want to set some context - can be a text file they can upload or allow them space to write -- to provide this context. This context should be available as 'baseline instructions' for an LLM that we are about to implement. 
-
-
-
-
-
