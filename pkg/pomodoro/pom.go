@@ -19,6 +19,8 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
+
+	"github.com/1x-eng/tomatick/pkg/context"
 )
 
 type TomatickMemento struct {
@@ -28,6 +30,7 @@ type TomatickMemento struct {
 	cycleCount               int
 	cyclesSinceLastLongBreak int
 	auroraInstance           aurora.Aurora
+	sessionContext           string
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -41,9 +44,17 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 }
 
 func (p *TomatickMemento) StartCycle() {
-
 	if p.cycleCount == 0 {
 		displayWelcomeMessage(p.auroraInstance)
+
+		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance)
+
+		sessionContext, err := contextManager.GetSessionContext()
+		if err != nil {
+			fmt.Println(p.auroraInstance.Red("Error getting context:"), err)
+		} else {
+			p.sessionContext = sessionContext
+		}
 	}
 
 	for {
