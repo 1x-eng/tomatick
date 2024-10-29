@@ -2,6 +2,7 @@ package pomodoro
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -9,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/1x-eng/tomatick/pkg/llm"
 	"github.com/1x-eng/tomatick/pkg/ltm"
+
+	"github.com/1x-eng/tomatick/pkg/llm"
 	"github.com/1x-eng/tomatick/pkg/markdown"
 
 	"github.com/1x-eng/tomatick/config"
@@ -129,19 +131,42 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	completedTasks := p.markTasksComplete(tasks)
 	reflections := p.captureReflections()
 
+	// Initialize the spinner
+	spinner := ui.NewSpinner(p.theme.Styles.Spinner)
+	done := make(chan bool)
+
+	// Start spinner in a goroutine
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				fmt.Printf("\r%s Analyzing reflections...", spinner.Next())
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
+
+	// Perform AI analysis
 	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
 	analysis, err := assistant.AnalyzeProgress(strings.Split(completedTasks, "\n"), reflections)
+
+	// Stop the spinner
+	done <- true
+	fmt.Print("\r") // Clear spinner line
+
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
 	} else {
-		fmt.Println(p.theme.Styles.Border.Render(
-			p.theme.Styles.InfoText.Render("\n=== AI Analysis ===\n" + analysis),
+		fmt.Println(p.theme.Styles.Title.Render(
+			p.theme.Styles.Title.Render("\n=== AI Analysis ===\n" + analysis),
 		))
 	}
 
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
 	if analysis != "" {
-		cycleSummary += "\n### AI Analysis\n" + analysis + "\n***\n"
+		cycleSummary += "\n### AI Analysis\n" + analysis + "\n*\n"
 	}
 
 	go p.asyncAppendToMem(cycleSummary)
@@ -149,14 +174,26 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 
 func (p *TomatickMemento) captureTasks() []string {
 	header := p.theme.Styles.Title.Render("=== Task Entry Mode ===")
-	instructions := p.theme.Styles.InfoText.Render(`
-• Type a task and press Enter to add it
-• Type 'suggest' to get AI task suggestions
-• Type 'done' when you've finished adding tasks
-• Type 'help' to see all available commands
-	`)
+	instructions := p.theme.Styles.SystemInstruction.Render(`
+───────────────────────────────────────────────
+                   Instructions
+───────────────────────────────────────────────
 
-	fmt.Println(p.theme.Styles.Border.Render(header + "\n" + instructions))
+• Add a Task: Type a task and press Enter.
+• Edit a Task: Type 'edit N new_description'
+  - N: Task number
+  - new_description: New task description
+• Remove a Task: Type 'remove N'
+  - N: Task number
+• AI Suggestions: Type 'suggest' to get suggestions.
+• Flush Suggestions: Type 'flush' to clear suggestions.
+• Finish: Type 'done' when finished adding tasks.
+• Help: Type 'help' to see all commands.
+• Quit: Type 'quit' to end the session.
+───────────────────────────────────────────────
+`)
+
+	fmt.Println(p.theme.Styles.Subtitle.Render(header + "\n" + instructions))
 
 	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
 	var tasks []string
@@ -202,6 +239,11 @@ func (p *TomatickMemento) captureTasks() []string {
 			}
 			p.currentSuggestions = suggestions // Store suggestions
 			p.displaySuggestions(suggestions)
+		case "flush":
+			p.FlushSuggestions()
+		case "quit":
+			fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightGreen("Session ended. Goodbye!")))
+			os.Exit(0)
 		case "help":
 			p.displayHelp()
 		case "list":
@@ -224,11 +266,11 @@ func (p *TomatickMemento) captureTasks() []string {
 }
 
 func (p *TomatickMemento) displaySuggestions(suggestions []string) {
-	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightYellow("\n=== AI Suggestions ===")))
+	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightBlue("\n=== AI Suggestions ===")))
 	for i, suggestion := range suggestions {
 		fmt.Printf("%s %s\n",
 			p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1)),
-			p.theme.Styles.TaskItem.Render(suggestion))
+			p.theme.Styles.AIMessage.Render(suggestion))
 	}
 	fmt.Println(p.auroraInstance.Italic("\nTo use a suggestion, type 'use N' where N is the suggestion number."))
 }
@@ -292,6 +334,15 @@ func (p *TomatickMemento) removeTask(tasks *[]string, input string) {
 }
 
 func (p *TomatickMemento) displayTasks(tasks []string) {
+	// Add a new line before displaying tasks
+	fmt.Println()
+
+	// Define the border
+	border := p.theme.Styles.Subtitle.Render("───────────────────────────────────────────────")
+
+	// Print the top border
+	fmt.Println(border)
+
 	var sb strings.Builder
 	sb.WriteString(p.theme.Styles.Subtitle.Render("Current Tasks"))
 	sb.WriteString("\n")
@@ -306,7 +357,9 @@ func (p *TomatickMemento) displayTasks(tasks []string) {
 		}
 	}
 
-	fmt.Println(p.theme.Styles.Border.Render(sb.String()))
+	fmt.Println(p.theme.Styles.Subtitle.Render(sb.String()))
+
+	// fmt.Println(border)
 }
 
 func (p *TomatickMemento) displayHelp() {
@@ -317,6 +370,8 @@ func (p *TomatickMemento) displayHelp() {
 	fmt.Println(p.auroraInstance.BrightYellow("• edit N new_description: Edit task N"))
 	fmt.Println(p.auroraInstance.BrightYellow("• remove N: Remove task N"))
 	fmt.Println(p.auroraInstance.BrightYellow("• help: Show this help message"))
+	fmt.Println(p.auroraInstance.BrightYellow("• flush: Clear all AI suggestions"))
+	fmt.Println(p.auroraInstance.BrightYellow("• quit: End the session immediately"))
 }
 
 func (p *TomatickMemento) markTasksComplete(tasks []string) string {
@@ -416,7 +471,7 @@ func (p *TomatickMemento) printTotalHoursWorked() {
 	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("\n\nTotal TomatickMemento cycles completed: ")), p.auroraInstance.Bold(p.auroraInstance.BrightYellow(p.cycleCount)))
 	fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightCyan("Total hours worked: ")), p.auroraInstance.Bold(p.auroraInstance.BrightYellow(fmt.Sprintf("%.2f hours", totalHours))))
 
-	workHoursSummary := fmt.Sprintf("#### Total Hours Worked: %.2f hours\n#### Total Cycles Completed: %d\n***", totalHours, p.cycleCount)
+	workHoursSummary := fmt.Sprintf("#### Total Hours Worked: %.2f hours\n#### Total Cycles Completed: %d\n*", totalHours, p.cycleCount)
 	// Not running this async, as we want to wait for it to complete before exiting
 	p.asyncAppendToMem(workHoursSummary)
 }
@@ -429,8 +484,13 @@ func displayWelcomeMessage(au aurora.Aurora) {
 	   ██║   ██║   ██║██╔████╔██║███████║   ██║   ██║██║     █████╔╝ 
 	   ██║   ██║   ██║██║╚██╔╝██║██╔══██║   ██║   ██║██║     ██╔═██╗ 
 	   ██║   ╚██████╔╝██║ ╚═╝ ██║██║  ██║   ██║   ██║╚██████╗██║  ██╗
-	   ╚═╝    ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
+	   ╚═╝    ╚═══���═╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
 	`
 	fmt.Println(au.Bold(au.BrightMagenta(asciiArt)))
 	fmt.Println()
+}
+
+func (p *TomatickMemento) FlushSuggestions() {
+	p.currentSuggestions = []string{}
+	fmt.Println(p.auroraInstance.Green("✓ AI suggestions flushed successfully."))
 }

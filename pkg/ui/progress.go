@@ -76,7 +76,7 @@ func (m ProgressModel) View() string {
 		),
 	))
 
-	return m.theme.Styles.Border.Render(str.String())
+	return m.theme.Styles.Subtitle.Render(str.String())
 }
 
 type tickMsg time.Time
