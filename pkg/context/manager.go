@@ -9,24 +9,34 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/logrusorgru/aurora"
+
+	"github.com/1x-eng/tomatick/pkg/ui"
 )
 
 type ContextManager struct {
 	contextDir string
 	au         aurora.Aurora
+	presenter  *ui.ContextPresenter
 }
 
-func NewContextManager(contextDir string, au aurora.Aurora) *ContextManager {
+func NewContextManager(contextDir string, au aurora.Aurora, theme *ui.Theme) *ContextManager {
 	return &ContextManager{
 		contextDir: contextDir,
 		au:         au,
+		presenter:  ui.NewContextPresenter(theme),
 	}
 }
 
 func (cm *ContextManager) GetSessionContext() (string, error) {
+	// Display the context menu
+	fmt.Print(cm.presenter.PresentContextMenu())
+
+	// Add a separator
+	fmt.Println()
+
 	var useContextFile bool
 	prompt := &survey.Confirm{
-		Message: cm.au.BrightBlue("Would you like to load context from a file?").String(),
+		Message: cm.au.BrightBlue("Would you like to load an existing context?").String(),
 	}
 	survey.AskOne(prompt, &useContextFile)
 
@@ -38,7 +48,6 @@ func (cm *ContextManager) GetSessionContext() (string, error) {
 }
 
 func (cm *ContextManager) getContextFromFile() (string, error) {
-	// List available context files
 	files, err := os.ReadDir(cm.contextDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to read context directory: %w", err)
@@ -51,14 +60,16 @@ func (cm *ContextManager) getContextFromFile() (string, error) {
 		}
 	}
 
+	// Display available contexts
+	fmt.Print(cm.presenter.PresentContextList(options))
+
 	if len(options) == 0 {
-		fmt.Println(cm.au.Yellow("No context files found in"), cm.contextDir)
 		return cm.getContextFromInput()
 	}
 
 	var selected string
 	prompt := &survey.Select{
-		Message: "Choose a context file:",
+		Message: "Choose a context:",
 		Options: options,
 	}
 	survey.AskOne(prompt, &selected)
@@ -72,7 +83,7 @@ func (cm *ContextManager) getContextFromFile() (string, error) {
 }
 
 func (cm *ContextManager) getContextFromInput() (string, error) {
-	fmt.Println(cm.au.Bold(cm.au.BrightYellow("\nEnter your context (type 'done' on a new line when finished):")))
+	fmt.Print(cm.presenter.PresentContextInput())
 
 	var lines []string
 	scanner := bufio.NewScanner(os.Stdin)
@@ -89,7 +100,7 @@ func (cm *ContextManager) getContextFromInput() (string, error) {
 
 	var saveContext bool
 	prompt := &survey.Confirm{
-		Message: cm.au.BrightBlue("Would you like to save this context for future sessions?").String(),
+		Message: "Would you like to save this context for future sessions?",
 	}
 	survey.AskOne(prompt, &saveContext)
 

@@ -74,31 +74,7 @@ func (p *TomatickMemento) StartCycle() {
 	if p.cycleCount == 0 {
 		displayWelcomeMessage(p.auroraInstance)
 
-		fmt.Println(p.theme.Styles.Title.Render("=== Session Context Collection ==="))
-		fmt.Println(p.theme.Styles.SystemInstruction.Render(`
-───────────────────────────────────────────────
-            Why Context Matters
-───────────────────────────────────────────────
-
-Your session context helps the AI:
-• Understand your current focus areas
-• Provide more relevant task suggestions
-• Track progress across sessions
-• Prevent context switching
-• Optimize for sustainable progress
-
-Your copilot uses this information to:
-• Calibrate task difficulty
-• Manage cognitive load
-• Maintain strategic momentum
-• Prevent burnout
-───────────────────────────────────────────────
-`))
-
-		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance)
-
-		fmt.Println(p.theme.Styles.Subtitle.Render("Please provide context for this work session:"))
-		fmt.Println(p.theme.Styles.InfoText.Render("(What are you working on? What are your goals? What challenges are you facing?)"))
+		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme)
 
 		sessionContext, err := contextManager.GetSessionContext()
 		if err != nil {
