@@ -108,7 +108,58 @@ Tomatick Memento uses advanced cognitive optimization algorithms to help you mai
 - Maintains productive momentum without the burnout
 - Ensures consistent, sustainable progress
 
-Every suggestion and analysis is precision-engineered to help you achieve maximum impact while maintaining optimal energy levels.
+Every suggestion and analysis is precision-engineered to help you achieve maximum impact while maintaining optimal energy levels
+
+## Why Tomatick?
+
+Look, we get it. The world needs another pomodoro timer like it needs another JavaScript framework. But hear us out:
+
+- **Perfect is the Enemy of Done**: Most productivity tools assume you're a perfectly rational being who makes optimal decisions. (Spoiler: You're not, and neither are we)
+- **Context Switching is Killing Us**: The average knowledge worker loses 23 minutes to each context switch. We help you batch similar tasks and maintain focus
+- **Burnout isn't Badges of Honor**: Working until you crash isn't cool. We help you maintain sustainable progress without the guilt trips
+- **Decision Fatigue is Real**: By the end of the day, you're making worse decisions. We handle the small decisions so you can focus on what matters
+- **Progress Over Perfection**: We help you track actual progress, not just time spent staring at screens
+
+## Why mem.ai?
+
+I'm not affiliated with mem.ai, but kinda like their product for good reasons:
+
+### The Second Brain Synergy
+- mem.ai isn't just another note-taking app - it's the ability to create a web out of your thoughts and ideas. Thanks to LLMs, you can interact with this knowledge web naturally, reducing cognitive load on your brain. While their product is still in alpha (they call it 'production grade', but, it is very rough around the edges), I haven't found anything else that approaches personal knowledge management quite this way. Not yet, anyway.
+- Your tasks don't exist in isolation; they're connected to your notes, research, and thoughts
+- Temporal search means you can find task patterns across time ("What was I working on last quarter?")
+- Chat with your notes to understand how your productivity intersects with your knowledge base
+
+### Perfect Integration
+- Natural language task logging that becomes part of your knowledge graph
+- Seamless connection between your productivity data and your broader knowledge base (should you choose to go all in with mem.ai that is)
+- Future-proof your productivity data - it's all searchable and connected
+- Cross-pollination between your tasks and your notes (because context matters)
+
+### Long-term Value
+- Your productivity data becomes part of your personal knowledge base
+- Understand how your tasks relate to your broader goals and notes
+- Query your past productivity patterns alongside your notes
+- Build a genuine understanding of your work patterns over time
+
+## Why Perplexity?
+
+It's just a start.
+
+### Current Benefits
+- Quick to implement and get started
+- Built-in internet search capabilities
+- Reasonable cost structure
+- Good balance of features and simplicity
+
+### Future Plans
+Goal is to make Tomatick model-agnostic. Soon, you'll be able to:
+- Choose from multiple AI providers
+- Bring your own API keys
+- Mix and match models for different features
+- Self-host your own models (coming soon)
+
+The goal isn't to lock you into any particular AI provider - it's to give you the cognitive support you need, however you prefer to get it.
 
 ## Contributing
 
