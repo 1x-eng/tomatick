@@ -45,6 +45,20 @@ Yet another pomodoro timer (yes, really) – but this one's your accountability 
   - Finds useful patterns
 
 
+## See it in Action
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=UVKKza3Isu0" target="_blank">
+    <img 
+      src="https://img.youtube.com/vi/UVKKza3Isu0/maxresdefault.jpg" 
+      alt="Tomatick Demo" 
+      style="width:700px;"/>
+  </a>
+</div>
+
+▶️ Watch a quick demo of Tomatick in action, to help get you started.
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -100,26 +114,25 @@ Yet another pomodoro timer (yes, really) – but this one's your accountability 
 
 ## How It Works
 
-Tomatick Memento uses advanced cognitive optimization algorithms to help you maintain peak performance while preventing burnout. The system:
+Tomatick Memento combines traditional pomodoro timing with data analysis to help optimize your work sessions. The system:
 
-- Analyzes your work patterns and adapts to your natural rhythms
-- Sequences tasks based on cognitive demand and energy states
-- Monitors mental load to prevent overextension
-- Reduces decision overhead through intelligent suggestions
-- Maintains productive momentum without the burnout
-- Ensures consistent, sustainable progress
+- Tracks work patterns to identify your productive periods
+- Organizes tasks based on estimated cognitive load
+- Provides alerts when signs of mental fatigue appear
+- Offers task suggestions based on historical data
+- Helps maintain consistent work intervals
 
-Every suggestion and analysis is precision-engineered to help you achieve maximum impact while maintaining optimal energy levels
+The goal is to help you work effectively while avoiding exhaustion.
 
-## Why Tomatick?
+## Why Another Pomodoro Timer?
 
-Look, we get it. The world needs another pomodoro timer like it needs another JavaScript framework. But hear us out:
+Tomatick addresses some common challenges in knowledge work:
 
-- **Perfect is the Enemy of Done**: Most productivity tools assume you're a perfectly rational being who makes optimal decisions. (Spoiler: You're not, and neither are we)
-- **Context Switching is Killing Us**: The average knowledge worker loses 23 minutes to each context switch. We help you batch similar tasks and maintain focus
-- **Burnout isn't Badges of Honor**: Working until you crash isn't cool. We help you maintain sustainable progress without the guilt trips
-- **Decision Fatigue is Real**: By the end of the day, you're making worse decisions. We handle the small decisions so you can focus on what matters
-- **Progress Over Perfection**: We help you track actual progress, not just time spent staring at screens
+- **Practical Over Perfect**: We focus on getting things done rather than perfect optimization
+- **Reduced Context Switching**: Groups similar tasks together to maintain focus
+- **Sustainable Pacing**: Helps prevent overwork through regular breaks and session monitoring
+- **Simplified Decisions**: Reduces small decisions during work sessions
+- **Progress Tracking**: Measures concrete task completion rather than just time spent
 
 ## Why mem.ai?
 
@@ -160,7 +173,7 @@ Goal is to make Tomatick model-agnostic. Soon, you'll be able to:
 - Mix and match models for different features
 - Self-host your own models (coming soon)
 
-The goal isn't to lock you into any particular AI provider - it's to give you the cognitive support you need, however you prefer to get it.
+My goal is to make Tomatick model-agnostic, giving you the freedom to choose how you want to use AI with the tool. I don't want to lock you into any specific AI provider.
 
 ## Contributing
 
