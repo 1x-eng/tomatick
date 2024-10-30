@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 )
@@ -18,33 +17,31 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	pomoDuration, _ := time.ParseDuration("25m")
-	shortBreak, _ := time.ParseDuration("5m")
-	longBreak, _ := time.ParseDuration("15m")
-	cyclesBeforeLongBreak := 4
-
-	if val, exists := os.LookupEnv("POMODORO_DURATION"); exists {
-		if d, err := time.ParseDuration(val); err == nil {
-			pomoDuration = d
-		}
-	}
-	if val, exists := os.LookupEnv("SHORT_BREAK_DURATION"); exists {
-		if d, err := time.ParseDuration(val); err == nil {
-			shortBreak = d
-		}
-	}
-	if val, exists := os.LookupEnv("LONG_BREAK_DURATION"); exists {
-		if d, err := time.ParseDuration(val); err == nil {
-			longBreak = d
-		}
-	}
-	if val, exists := os.LookupEnv("CYCLES_BEFORE_LONGBREAK"); exists {
-		if n, err := strconv.Atoi(val); err == nil {
-			cyclesBeforeLongBreak = n
-		}
+	if err := validateEnvVars(); err != nil {
+		return nil, err
 	}
 
-	contextDir := os.Getenv("TOMATICK_CONTEXT_DIR")
+	pomoDuration, err := parseDurationEnv("POMODORO_DURATION", "25m")
+	if err != nil {
+		return nil, fmt.Errorf("invalid POMODORO_DURATION: %w", err)
+	}
+
+	shortBreak, err := parseDurationEnv("SHORT_BREAK_DURATION", "5m")
+	if err != nil {
+		return nil, fmt.Errorf("invalid SHORT_BREAK_DURATION: %w", err)
+	}
+
+	longBreak, err := parseDurationEnv("LONG_BREAK_DURATION", "15m")
+	if err != nil {
+		return nil, fmt.Errorf("invalid LONG_BREAK_DURATION: %w", err)
+	}
+
+	cycles, err := parseIntEnv("CYCLES_BEFORE_LONGBREAK", 4)
+	if err != nil {
+		return nil, fmt.Errorf("invalid CYCLES_BEFORE_LONGBREAK: %w", err)
+	}
+
+	contextDir := getEnvVar("TOMATICK_CONTEXT_DIR")
 	if contextDir == "" {
 		contextDir = getDefaultContextDir()
 	}
@@ -57,9 +54,25 @@ func LoadConfig() (*Config, error) {
 		TomatickMementoDuration: pomoDuration,
 		ShortBreakDuration:      shortBreak,
 		LongBreakDuration:       longBreak,
-		CyclesBeforeLongBreak:   cyclesBeforeLongBreak,
-		MEMAIAPIToken:           os.Getenv("MEM_AI_API_TOKEN"),
+		CyclesBeforeLongBreak:   cycles,
+		MEMAIAPIToken:           getEnvVar("MEM_AI_API_TOKEN"),
 		ContextDir:              contextDir,
-		PerplexityAPIToken:      os.Getenv("PERPLEXITY_API_TOKEN"),
+		PerplexityAPIToken:      getEnvVar("PERPLEXITY_API_TOKEN"),
 	}, nil
+}
+
+func parseDurationEnv(key, defaultValue string) (time.Duration, error) {
+	value := getEnvVar(key)
+	if value == "" {
+		value = defaultValue
+	}
+	return time.ParseDuration(value)
+}
+
+func parseIntEnv(key string, defaultValue int) (int, error) {
+	value := getEnvVar(key)
+	if value == "" {
+		return defaultValue, nil
+	}
+	return strconv.Atoi(value)
 }

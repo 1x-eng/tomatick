@@ -2,6 +2,7 @@
 
 Yet another pomodoro timer (yes, really) – but this one's your accountability buddy with just enough cognitive wizardry to keep perfectionists from disappearing down the rabbit hole of endless optimizations. Because sometimes "good enough" today beats "perfect" never. :brain: :rocket:
 
+(& Tomatick ?? What the heck is that? Well, it's a combination of "tomato" and "tick" (as in a timer) 🤷 Dad joke? Maybe.)
 ## Core Features
 
 - **Interactive CLI Interface**: A terminal interface that doesn't suck, with colors and all that jazz
