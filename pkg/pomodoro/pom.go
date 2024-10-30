@@ -566,7 +566,7 @@ func displayWelcomeMessage(au aurora.Aurora) {
 	   ╚═╝    ╚═══╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
 	`
 	welcomeText := `
-	🌟 Welcome to Tomatick - Your Productivity Partner 🌟
+	🌟 Your Productivity Partner 🌟
 	
 	🎯 Focus Enhancement  |  🧠 Cognitive Optimization  |  📈 Progress Tracking
 	`
