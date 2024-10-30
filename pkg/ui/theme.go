@@ -8,6 +8,7 @@ import (
 type Theme struct {
 	Aurora aurora.Aurora
 	Styles ThemeStyles
+	Emoji  ThemeEmoji
 }
 
 type ThemeStyles struct {
@@ -27,66 +28,104 @@ type ThemeStyles struct {
 	AIMessage         lipgloss.Style
 }
 
+type ThemeEmoji struct {
+	TaskComplete   string
+	TaskInProgress string
+	TaskPending    string
+	Reflection     string
+	Timer          string
+	Break          string
+	Analysis       string
+	Warning        string
+	Success        string
+	Error          string
+	Suggestion     string
+	Help           string
+	Stats          string
+	Context        string
+	Sound          string
+	Brain          string
+	Bullet         string
+	Section        string
+}
+
 func NewTheme() *Theme {
 	return &Theme{
 		Aurora: aurora.NewAurora(true),
 		Styles: ThemeStyles{
 			Title: lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#F92672")).
-				MarginBottom(1),
+				Foreground(lipgloss.Color("#E0B0FF")).
+				MarginBottom(1).
+				Padding(1, 0),
 
 			Subtitle: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#A6E22E")).
+				Foreground(lipgloss.Color("#9DC8C8")).
 				MarginBottom(1),
 
 			TaskItem: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#66D9EF")).
+				Foreground(lipgloss.Color("#D4E2D4")).
 				PaddingLeft(2),
 
 			TaskNumber: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FD971F")).
+				Foreground(lipgloss.Color("#DEBACE")).
 				Bold(true),
 
-			TaskPrompt: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#E6DB74")).
-				PaddingLeft(2),
-
 			InfoText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#75715E")),
+				Foreground(lipgloss.Color("#B4C8EA")),
 
 			ErrorText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#F92672")).
+				Foreground(lipgloss.Color("#FFB4B4")).
 				Bold(true),
 
 			SuccessText: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#A6E22E")).
+				Foreground(lipgloss.Color("#BADEB3")).
 				Bold(true),
 
 			Timer: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FD971F")).
+				Foreground(lipgloss.Color("#E6CCB2")).
 				Bold(true).
 				Padding(0, 1),
 
+			SystemInstruction: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#C7B7A3")).
+				Italic(true),
+
+			SystemMessage: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#B5B9FF")).
+				Italic(true),
+
 			Progress: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#AE81FF")).
+				Foreground(lipgloss.Color("#D7C0AE")).
 				Bold(true),
 
 			Spinner: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#66D9EF")).
-				Bold(true),
-
-			SystemInstruction: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#E69F66")).
-				Bold(true),
-
-			SystemMessage: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#75715E")).
+				Foreground(lipgloss.Color("#C4B5FD")).
 				Bold(true),
 
 			AIMessage: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#007ACC")).
-				Bold(true),
+				Foreground(lipgloss.Color("#B8E7E1")).
+				Italic(true),
+		},
+		Emoji: ThemeEmoji{
+			TaskComplete:   "✅",
+			TaskInProgress: "⏳",
+			TaskPending:    "📝",
+			Reflection:     "💭",
+			Timer:          "⏰",
+			Break:          "🌿",
+			Analysis:       "🔍",
+			Warning:        "⚠️",
+			Success:        "✨",
+			Error:          "❌",
+			Suggestion:     "💡",
+			Help:           "ℹ️",
+			Stats:          "📊",
+			Context:        "🎯",
+			Sound:          "🔔",
+			Brain:          "🧠",
+			Bullet:         "•",
+			Section:        "📋",
 		},
 	}
 }

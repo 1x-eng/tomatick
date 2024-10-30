@@ -58,25 +58,40 @@ func (m ProgressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m ProgressModel) View() string {
 	if m.done {
-		return m.theme.Styles.SuccessText.Render("Done!")
+		return m.theme.Styles.SuccessText.Render(
+			fmt.Sprintf("\n%s Time's up! Take a moment to reflect %s\n",
+				m.theme.Emoji.Success,
+				m.theme.Emoji.Reflection))
 	}
 
 	remainingTime := m.total - m.elapsed
 	progress := float64(m.elapsed) / float64(m.total)
 
 	str := strings.Builder{}
-	str.WriteString(m.theme.Styles.InfoText.Render(m.description))
-	str.WriteString("\n")
-	str.WriteString(m.progress.ViewAs(progress))
-	str.WriteString("\n")
+
+	// Add a border
+	border := strings.Repeat("─", 50)
+	str.WriteString(m.theme.Styles.Subtitle.Render(border) + "\n")
+
+	// Timer description
+	str.WriteString(m.theme.Styles.InfoText.Render(
+		fmt.Sprintf("%s %s\n", m.theme.Emoji.Timer, m.description)))
+
+	// Progress bar
+	str.WriteString(m.progress.ViewAs(progress) + "\n")
+
+	// Remaining time
 	str.WriteString(m.theme.Styles.Timer.Render(
-		fmt.Sprintf("Remaining: %02d:%02d",
+		fmt.Sprintf("%s Remaining: %02d:%02d",
+			m.theme.Emoji.Timer,
 			int(remainingTime.Minutes()),
 			int(remainingTime.Seconds())%60,
-		),
-	))
+		)))
 
-	return m.theme.Styles.Subtitle.Render(str.String())
+	// Bottom border
+	str.WriteString("\n" + m.theme.Styles.Subtitle.Render(border))
+
+	return str.String()
 }
 
 type tickMsg time.Time
