@@ -179,7 +179,8 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 
 	// Stop the spinner
 	done <- true
-	fmt.Print("\r") // Clear spinner line
+	fmt.Print("\r\033[K") // Clear the entire line
+	fmt.Print("\n")       // Move to next line
 
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
