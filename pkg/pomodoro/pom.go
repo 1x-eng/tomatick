@@ -188,6 +188,15 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 		presenter := ui.NewAnalysisPresenter(p.theme)
 		formattedAnalysis := presenter.Present(analysis)
 		fmt.Println(formattedAnalysis)
+
+		// Prompt user to acknowledge
+		prompt := &survey.Confirm{
+			Message: p.theme.Styles.InfoText.Render("Ready for your break?"),
+			Default: true,
+		}
+		var ready bool
+		survey.AskOne(prompt, &ready)
+
 		p.lastAnalysis = analysis
 	}
 
