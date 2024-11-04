@@ -26,6 +26,7 @@ type ThemeStyles struct {
 	Progress          lipgloss.Style
 	Spinner           lipgloss.Style
 	AIMessage         lipgloss.Style
+	Break             lipgloss.Style
 }
 
 type ThemeEmoji struct {
@@ -106,6 +107,10 @@ func NewTheme() *Theme {
 			AIMessage: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#B8E7E1")).
 				Italic(true),
+
+			Break: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#86EFAC")).
+				Bold(true),
 		},
 		Emoji: ThemeEmoji{
 			TaskComplete:   "✅",

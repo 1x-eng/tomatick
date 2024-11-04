@@ -28,21 +28,31 @@ func (ap *AnalysisPresenter) parseAnalysis(analysis string) map[string][]string 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		if strings.HasPrefix(line, "##") {
+		// Match both ## and **Section** headers
+		if strings.HasPrefix(line, "##") || (strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**")) {
 			if currentSection != "" {
 				sections[currentSection] = currentContent
 			}
-			currentSection = strings.TrimSpace(strings.TrimPrefix(line, "##"))
+			// Clean up section header
+			currentSection = strings.TrimSpace(strings.Trim(strings.TrimPrefix(strings.TrimPrefix(line, "##"), "**"), "**"))
 			currentContent = []string{}
-		} else if line != "" {
-			// Normalize bullet points and numbering
+		} else if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "*") || strings.HasPrefix(line, "•") {
+			// Normalize bullet points and add to current content
 			line = ap.normalizeListItem(line)
+			if line != "" {
+				currentContent = append(currentContent, line)
+			}
+		} else if line != "" && currentSection != "" {
+			// Add non-empty lines that aren't headers or bullets
 			currentContent = append(currentContent, line)
 		}
 	}
+
+	// Don't forget the last section
 	if currentSection != "" {
 		sections[currentSection] = currentContent
 	}
+
 	return sections
 }
 
@@ -64,27 +74,43 @@ func (ap *AnalysisPresenter) normalizeListItem(line string) string {
 func (ap *AnalysisPresenter) formatSections(sections map[string][]string) string {
 	var sb strings.Builder
 
-	// Initial title with single newline
-	sb.WriteString(ap.theme.Styles.Subtitle.Render("🤖 Your copilot's analysis"))
+	// Initial title with double newline and border
+	sb.WriteString("\n" + ap.theme.Styles.Subtitle.Render("🤖 Your copilot's analysis"))
+	sb.WriteString("\n\n" + ap.theme.Styles.Subtitle.Render(strings.Repeat("─", 50)) + "\n")
+
+	// If sections is empty, add a message
+	if len(sections) == 0 {
+		sb.WriteString("\n" + ap.theme.Styles.InfoText.Render("Analysis processing..."))
+		return sb.String()
+	}
 
 	for section, content := range sections {
 		// Add section header with consistent spacing
-		sb.WriteString(fmt.Sprintf("\n\n%s %s",
+		sb.WriteString(fmt.Sprintf("\n%s %s\n",
 			ap.theme.Emoji.Section,
 			ap.theme.Styles.TaskNumber.Render(section)))
 
 		// Process content items
 		for _, line := range content {
 			line = strings.TrimSpace(line)
-			line = strings.ReplaceAll(line, "**", "")
-
-			if line != "" {
-				sb.WriteString(fmt.Sprintf("\n%s %s",
-					ap.theme.Emoji.Bullet,
-					ap.theme.Styles.InfoText.Render(line)))
+			if line == "" {
+				continue
 			}
+
+			// Remove any markdown formatting
+			line = strings.ReplaceAll(line, "**", "")
+			line = strings.ReplaceAll(line, "*", "")
+			line = strings.ReplaceAll(line, "[", "")
+			line = strings.ReplaceAll(line, "]", "")
+
+			sb.WriteString(fmt.Sprintf("%s %s\n",
+				ap.theme.Emoji.Bullet,
+				ap.theme.Styles.InfoText.Render(line)))
 		}
 	}
+
+	// Add bottom border
+	sb.WriteString("\n" + ap.theme.Styles.Subtitle.Render(strings.Repeat("─", 50)))
 
 	return sb.String()
 }

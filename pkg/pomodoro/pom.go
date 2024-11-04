@@ -185,17 +185,29 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
 	} else {
+		if analysis == "" {
+			fmt.Println(p.auroraInstance.Yellow("Warning: Received empty analysis"))
+		}
+
 		presenter := ui.NewAnalysisPresenter(p.theme)
 		formattedAnalysis := presenter.Present(analysis)
 		fmt.Println(formattedAnalysis)
 
-		// Prompt user to acknowledge
-		prompt := &survey.Confirm{
-			Message: p.theme.Styles.InfoText.Render("Ready for your break?"),
-			Default: true,
+		// Keep prompting until user is ready
+		for {
+			prompt := &survey.Confirm{
+				Message: p.theme.Styles.Break.Render("Ready for your break?"),
+				Default: true,
+			}
+			var ready bool
+			survey.AskOne(prompt, &ready)
+
+			if ready {
+				break
+			} else {
+				fmt.Println(p.theme.Styles.Break.Render("\nTake your time to review the analysis. Press Y when ready to continue."))
+			}
 		}
-		var ready bool
-		survey.AskOne(prompt, &ready)
 
 		p.lastAnalysis = analysis
 	}
@@ -568,7 +580,7 @@ func (p *TomatickMemento) printTotalHoursWorked() {
 
 func displayWelcomeMessage(au aurora.Aurora) {
 	asciiArt := `
-	████████╗ ██████╗ ███╗   ███╗ █████╗ ████████╗██╗ ██████╗██╗  ██╗
+	████████╗ ██████╗ ███╗   ██╗ █████╗ ████████╗██╗ ██████╗██╗  ██╗
 	╚══██╔══╝██╔═══██╗████╗ ████║██╔══██╗╚══██╔══╝██║██╔════╝██║ ██╔╝
 	   ██║   ██║   ██║██╔████╔██║███████║   ██║   ██║██║     █████╔╝ 
 	   ██║   ██║   ██║██║╚██╔╝██║██╔══██║   ██║   ██║██║     ██╔═██╗ 
