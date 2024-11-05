@@ -30,7 +30,9 @@ func (sc *SuggestionChat) Chat(userInput string) (string, error) {
 		Content: userInput,
 	})
 
-	systemPrompt := `You are an advanced task optimization assistant engaged in a discussion about specific task suggestions. Your core responsibilities:
+	var systemPrompt string
+	if len(sc.suggestions) > 0 {
+		systemPrompt = `You are an advanced task optimization assistant engaged in a discussion about specific task suggestions. Your core responsibilities:
 
 CONTEXT AWARENESS:
 - Maintain strict relevance to the session context and current suggestions
@@ -42,14 +44,33 @@ SUGGESTION CLARIFICATION:
 - Break down complex tasks into clear, achievable steps
 - Highlight dependencies and prerequisites
 - Explain the reasoning behind each suggestion
-- Focus on practical implementation details
+- Focus on practical implementation details`
+	} else {
+		systemPrompt = `You are an advanced performance analysis assistant engaged in a discussion about the session analysis. Your core responsibilities:
+
+ANALYSIS CLARIFICATION:
+- Provide detailed explanations of analysis points
+- Explain the reasoning behind observations
+- Offer concrete examples and evidence
+- Address user questions and concerns
+- Maintain focus on performance optimization
+
+FEEDBACK PROCESSING:
+- Accept and process user feedback
+- Adjust analysis based on new information
+- Provide alternative perspectives when needed
+- Help users understand performance patterns
+- Guide towards actionable improvements`
+	}
+
+	systemPrompt += `
 
 RESPONSE GUIDELINES:
 1. If question is relevant:
    - Provide clear, structured response
-   - Include specific steps or clarifications
+   - Include specific details and clarifications
    - Reference context when applicable
-   - Maintain focus on task completion
+   - Maintain focus on improvement
 
 2. If question seems off-topic:
    - Politely flag the digression
@@ -72,11 +93,15 @@ Current Session Context:
 """
 %s
 """
+`
 
+	if len(sc.suggestions) > 0 {
+		systemPrompt += `
 Current Suggestions Under Discussion:
 """
 %s
 """`
+	}
 
 	messages := []Message{
 		{

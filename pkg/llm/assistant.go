@@ -232,3 +232,12 @@ func (a *Assistant) StartSuggestionChat(suggestions []string, lastAnalysis strin
 		lastAnalysis,
 	)
 }
+
+func (a *Assistant) StartAnalysisChat(analysis string) *SuggestionChat {
+	return NewSuggestionChat(
+		a,
+		a.context,
+		[]string{}, // No suggestions needed for analysis chat
+		analysis,   // Use the analysis as the last analysis
+	)
+}

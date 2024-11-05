@@ -198,7 +198,24 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 		formattedAnalysis := presenter.Present(analysis)
 		fmt.Println(formattedAnalysis)
 
-		// Keep prompting until user is ready
+		p.lastAnalysis = analysis
+
+		if analysis != "" {
+			prompt := &survey.Confirm{
+				Message: p.theme.Styles.Break.Render("Would you like to discuss this analysis with your copilot?"),
+				Default: true,
+			}
+			var discussAnalysis bool
+			survey.AskOne(prompt, &discussAnalysis)
+
+			if discussAnalysis {
+				assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
+				analysisChat := assistant.StartAnalysisChat(analysis)
+				p.handleAnalysisChat(analysisChat)
+			}
+		}
+
+		// Keep prompting until user is ready - taking a break is important to avoid burnout
 		for {
 			prompt := &survey.Confirm{
 				Message: p.theme.Styles.Break.Render("Ready for your break?"),
@@ -213,8 +230,6 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 				fmt.Println(p.theme.Styles.Break.Render("\nTake your time to review the analysis. Press Y when ready to continue."))
 			}
 		}
-
-		p.lastAnalysis = analysis
 	}
 
 	cycleSummary := markdown.FormatCycleSummary(completedTasks, reflections)
@@ -691,6 +706,75 @@ func (p *TomatickMemento) handleSuggestionChat() {
 		}
 
 		// Format and display response
+		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
+		fmt.Printf("%s %s\n",
+			p.theme.Emoji.AIResponse,
+			p.theme.Styles.AIMessage.Render(response))
+		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
+	}
+}
+
+func (p *TomatickMemento) handleAnalysisChat(chat *llm.SuggestionChat) {
+	chatBorder := strings.Repeat(p.theme.Emoji.ChatDivider, 50)
+	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+	fmt.Println(p.theme.Styles.ChatHeader.Render(
+		fmt.Sprintf("%s Analysis Discussion %s",
+			p.theme.Emoji.ChatStart,
+			p.theme.Emoji.Brain)))
+	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+
+	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss the analysis (type 'exit' to end chat)"))
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Printf("%s", p.theme.Styles.ChatPrompt.PaddingTop(0).PaddingBottom(0).Render(p.theme.Emoji.UserInput+" "))
+
+		if !scanner.Scan() {
+			break
+		}
+
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" {
+			continue
+		}
+
+		if input == "exit" {
+			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+			fmt.Println(p.theme.Styles.ChatHeader.Render(
+				fmt.Sprintf("%s Chat session ended %s",
+					p.theme.Emoji.ChatEnd,
+					p.theme.Emoji.Success)))
+			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+			break
+		}
+
+		spinner := ui.NewSpinner(p.theme.Styles.Spinner.
+			Foreground(lipgloss.Color("#818CF8")).
+			Bold(true))
+		done := make(chan bool)
+
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					fmt.Printf("\r%s Analyzing...", spinner.Next())
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+		}()
+
+		response, err := chat.Chat(input)
+		done <- true
+		fmt.Print("\r\033[K")
+
+		if err != nil {
+			fmt.Println(p.theme.Styles.ErrorText.Render(
+				fmt.Sprintf("%s Error: %v", p.theme.Emoji.Error, err)))
+			continue
+		}
+
 		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
 		fmt.Printf("%s %s\n",
 			p.theme.Emoji.AIResponse,
