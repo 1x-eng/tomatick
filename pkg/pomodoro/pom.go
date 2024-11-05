@@ -184,8 +184,8 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 
 	// Stop the spinner
 	done <- true
-	fmt.Print("\r\033[K") // Clear the entire line
-	fmt.Print("\n")       // Move to next line
+	fmt.Print("\r\033[K")
+	fmt.Print("\n")
 
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
@@ -286,7 +286,7 @@ func (p *TomatickMemento) captureTasks() []string {
 			}
 			p.currentSuggestions = suggestions // Store suggestions
 			// Initialize chat session here
-			p.currentChat = assistant.StartSuggestionChat(suggestions)
+			p.currentChat = assistant.StartSuggestionChat(suggestions, p.lastAnalysis)
 			p.displaySuggestions(suggestions)
 			fmt.Println(p.theme.Styles.InfoText.Render("\nType 'discuss suggestions' to discuss these suggestions with your copilot"))
 		case "flush":
@@ -682,7 +682,7 @@ func (p *TomatickMemento) handleSuggestionChat() {
 
 		response, err := p.currentChat.Chat(input)
 		done <- true
-		fmt.Print("\r\033[K") // Clear spinner line
+		fmt.Print("\r\033[K")
 
 		if err != nil {
 			fmt.Println(p.theme.Styles.ErrorText.Render(

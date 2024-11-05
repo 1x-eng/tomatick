@@ -6,18 +6,20 @@ import (
 )
 
 type SuggestionChat struct {
-	assistant   *Assistant
-	history     []Message
-	context     string
-	suggestions []string
+	assistant    *Assistant
+	history      []Message
+	context      string
+	suggestions  []string
+	lastAnalysis string
 }
 
-func NewSuggestionChat(assistant *Assistant, initialContext string, suggestions []string) *SuggestionChat {
+func NewSuggestionChat(assistant *Assistant, initialContext string, suggestions []string, lastAnalysis string) *SuggestionChat {
 	return &SuggestionChat{
-		assistant:   assistant,
-		history:     make([]Message, 0),
-		context:     initialContext,
-		suggestions: suggestions,
+		assistant:    assistant,
+		history:      make([]Message, 0),
+		context:      initialContext,
+		suggestions:  suggestions,
+		lastAnalysis: lastAnalysis,
 	}
 }
 
@@ -61,16 +63,25 @@ RESPONSE GUIDELINES:
    - Suggest specific approaches
    - Focus on actionability
 
-Current Session Context:
+Last Session Analysis:
+"""
 %s
+"""
+
+Current Session Context:
+"""
+%s
+"""
 
 Current Suggestions Under Discussion:
-%s`
+"""
+%s
+"""`
 
 	messages := []Message{
 		{
 			Role:    "system",
-			Content: fmt.Sprintf(systemPrompt, sc.context, strings.Join(sc.suggestions, "\n")),
+			Content: fmt.Sprintf(systemPrompt, sc.lastAnalysis, sc.context, strings.Join(sc.suggestions, "\n")),
 		},
 	}
 
