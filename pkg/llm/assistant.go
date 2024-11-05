@@ -223,3 +223,11 @@ Maintain maximum analytical depth while ensuring clarity and actionability in pr
 
 	return response, nil
 }
+
+func (a *Assistant) StartSuggestionChat(suggestions []string) *SuggestionChat {
+	return NewSuggestionChat(
+		a,
+		a.context,
+		suggestions,
+	)
+}

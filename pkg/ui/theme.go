@@ -27,6 +27,12 @@ type ThemeStyles struct {
 	Spinner           lipgloss.Style
 	AIMessage         lipgloss.Style
 	Break             lipgloss.Style
+	ChatHeader        lipgloss.Style
+	ChatBorder        lipgloss.Style
+	UserMessage       lipgloss.Style
+	ChatPrompt        lipgloss.Style
+	ChatSession       lipgloss.Style
+	ChatDivider       lipgloss.Style
 }
 
 type ThemeEmoji struct {
@@ -48,6 +54,11 @@ type ThemeEmoji struct {
 	Brain          string
 	Bullet         string
 	Section        string
+	ChatStart      string
+	UserInput      string
+	AIResponse     string
+	ChatEnd        string
+	ChatDivider    string
 }
 
 func NewTheme() *Theme {
@@ -111,6 +122,36 @@ func NewTheme() *Theme {
 			Break: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#86EFAC")).
 				Bold(true),
+
+			ChatHeader: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
+
+			ChatBorder: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
+
+			UserMessage: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
+
+			ChatPrompt: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
+
+			ChatSession: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
+
+			ChatDivider: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#9D8CFF")).
+				Bold(true).
+				Padding(1, 0),
 		},
 		Emoji: ThemeEmoji{
 			TaskComplete:   "✅",
@@ -131,6 +172,11 @@ func NewTheme() *Theme {
 			Brain:          "🧠",
 			Bullet:         "•",
 			Section:        "📋",
+			ChatStart:      "👋",
+			UserInput:      "👤",
+			AIResponse:     "🤖",
+			ChatEnd:        "👋",
+			ChatDivider:    "🔀",
 		},
 	}
 }

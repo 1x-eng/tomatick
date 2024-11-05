@@ -13,6 +13,7 @@ import (
 	"github.com/1x-eng/tomatick/pkg/ltm"
 
 	"github.com/1x-eng/tomatick/pkg/llm"
+
 	"github.com/1x-eng/tomatick/pkg/markdown"
 
 	"github.com/1x-eng/tomatick/config"
@@ -20,6 +21,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/chzyer/readline"
 	"github.com/logrusorgru/aurora"
+
+	"bufio"
 
 	"github.com/1x-eng/tomatick/pkg/context"
 	"github.com/1x-eng/tomatick/pkg/ui"
@@ -37,6 +40,7 @@ var commandInstructions = []struct {
 	{"edit N text", "Edit task number N with new text"},
 	{"remove N", "Remove task number N from the list"},
 	{"suggest", "Get AI-powered task suggestions"},
+	{"discuss suggestions", "Start an interactive discussion about current suggestions"},
 	{"flush", "Clear any existing in-memory AI suggestions"},
 	{"help", "Show this help message"},
 	{"quit", "End the session and save progress"},
@@ -55,6 +59,7 @@ type TomatickMemento struct {
 	currentSuggestions       []string
 	currentTasks             []string
 	lastAnalysis             string
+	currentChat              *llm.SuggestionChat
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -235,7 +240,6 @@ func (p *TomatickMemento) captureTasks() []string {
 	instructions := p.theme.Styles.SystemInstruction.Render(sb.String())
 	fmt.Println(p.theme.Styles.Subtitle.Render(header + "\n" + instructions))
 
-	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
 	var tasks []string
 	rl, _ := readline.New(p.auroraInstance.BrightGreen("➤ ").String())
 	defer rl.Close()
@@ -271,6 +275,7 @@ func (p *TomatickMemento) captureTasks() []string {
 				}
 			}()
 
+			assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
 			suggestions, err := assistant.GetTaskSuggestions(tasks, p.lastAnalysis)
 			done <- true
 			fmt.Print("\r") // Clear spinner line
@@ -280,7 +285,10 @@ func (p *TomatickMemento) captureTasks() []string {
 				continue
 			}
 			p.currentSuggestions = suggestions // Store suggestions
+			// Initialize chat session here
+			p.currentChat = assistant.StartSuggestionChat(suggestions)
 			p.displaySuggestions(suggestions)
+			fmt.Println(p.theme.Styles.InfoText.Render("\nType 'discuss suggestions' to discuss these suggestions with your copilot"))
 		case "flush":
 			p.FlushSuggestions()
 		case "quit":
@@ -292,6 +300,12 @@ func (p *TomatickMemento) captureTasks() []string {
 			continue
 		case "":
 			fmt.Println(p.auroraInstance.Red("❗ Task cannot be empty. Please try again."))
+		case "discuss suggestions":
+			if p.currentChat == nil {
+				fmt.Println(p.auroraInstance.Red("❗ No active suggestion session. Use 'suggest' first."))
+				continue
+			}
+			p.handleSuggestionChat()
 		default:
 			if strings.HasPrefix(input, "edit ") {
 				p.editTask(&tasks, input)
@@ -602,4 +616,85 @@ func (p *TomatickMemento) FlushSuggestions() {
 	p.currentSuggestions = []string{}
 	p.lastAnalysis = ""
 	fmt.Println(p.auroraInstance.Green("✓ Copilot suggestions and analysis cache flushed successfully."))
+}
+
+func (p *TomatickMemento) handleSuggestionChat() {
+	// Display chat session start
+	chatBorder := strings.Repeat(p.theme.Emoji.ChatDivider, 50)
+	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+	fmt.Println(p.theme.Styles.ChatHeader.Render(
+		fmt.Sprintf("%s Interactive Suggestion Discussion %s",
+			p.theme.Emoji.ChatStart,
+			p.theme.Emoji.Brain)))
+	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+
+	// Display current suggestions for reference
+	fmt.Println(p.theme.Styles.InfoText.Render("\nCurrent Suggestions:"))
+	for i, suggestion := range p.currentSuggestions {
+		fmt.Printf("%s %s %s\n",
+			p.theme.Emoji.Bullet,
+			p.theme.Styles.TaskNumber.Render(fmt.Sprintf("%d.", i+1)),
+			p.theme.Styles.AIMessage.Render(suggestion))
+	}
+
+	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss these suggestions (type 'exit' to end chat)"))
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Printf("%s", p.theme.Styles.ChatPrompt.PaddingTop(0).PaddingBottom(0).Render(p.theme.Emoji.UserInput+" "))
+
+		if !scanner.Scan() {
+			break
+		}
+
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" {
+			continue
+		}
+
+		if input == "exit" {
+			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+			fmt.Println(p.theme.Styles.ChatHeader.Render(
+				fmt.Sprintf("%s Chat session ended %s",
+					p.theme.Emoji.ChatEnd,
+					p.theme.Emoji.Success)))
+			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+			break
+		}
+
+		// Show thinking spinner
+		spinner := ui.NewSpinner(p.theme.Styles.Spinner.
+			Foreground(lipgloss.Color("#818CF8")).
+			Bold(true))
+		done := make(chan bool)
+
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					fmt.Printf("\r%s Thinking...", spinner.Next())
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+		}()
+
+		response, err := p.currentChat.Chat(input)
+		done <- true
+		fmt.Print("\r\033[K") // Clear spinner line
+
+		if err != nil {
+			fmt.Println(p.theme.Styles.ErrorText.Render(
+				fmt.Sprintf("%s Error: %v", p.theme.Emoji.Error, err)))
+			continue
+		}
+
+		// Format and display response
+		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
+		fmt.Printf("%s %s\n",
+			p.theme.Emoji.AIResponse,
+			p.theme.Styles.AIMessage.Render(response))
+		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
+	}
 }
