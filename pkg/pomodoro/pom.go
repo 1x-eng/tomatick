@@ -81,7 +81,7 @@ func (p *TomatickMemento) StartCycle() {
 
 		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme)
 
-		sessionContext, err := contextManager.GetSessionContext()
+		sessionContext, err := contextManager.GetSessionContext(p.llmClient)
 		if err != nil {
 			fmt.Println(p.auroraInstance.Red("Error getting context:"), err)
 		} else {
@@ -89,7 +89,7 @@ func (p *TomatickMemento) StartCycle() {
 
 			// Confirm context collection
 			fmt.Println(p.theme.Styles.Subtitle.Render("\n✓ Context collected successfully"))
-			fmt.Println(p.theme.Styles.InfoText.Render("Copilot initialized with your session context"))
+			fmt.Println(p.theme.Styles.InfoText.Render("Copilot initialized with your refined session context"))
 			fmt.Println()
 		}
 	}

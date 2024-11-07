@@ -33,6 +33,10 @@ type ThemeStyles struct {
 	ChatPrompt        lipgloss.Style
 	ChatSession       lipgloss.Style
 	ChatDivider       lipgloss.Style
+	ThinkingText      lipgloss.Style
+	InfoBox           lipgloss.Style
+	RefinedContext    lipgloss.Style
+	ContextBullet     lipgloss.Style
 }
 
 type ThemeEmoji struct {
@@ -116,27 +120,28 @@ func NewTheme() *Theme {
 				Bold(true),
 
 			AIMessage: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#B8E7E1")).
-				Italic(true),
+				Foreground(lipgloss.Color("#98C379")).
+				Padding(0, 2).
+				MarginLeft(2),
 
 			Break: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#86EFAC")).
 				Bold(true),
 
 			ChatHeader: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#9D8CFF")).
+				Foreground(lipgloss.Color("#D19A66")).
 				Bold(true).
 				Padding(1, 0),
 
 			ChatBorder: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#9D8CFF")).
+				Foreground(lipgloss.Color("#5C6370")).
 				Bold(true).
 				Padding(1, 0),
 
 			UserMessage: lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#9D8CFF")).
-				Bold(true).
-				Padding(1, 0),
+				Foreground(lipgloss.Color("#E06C75")).
+				Padding(0, 2).
+				MarginLeft(2),
 
 			ChatPrompt: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#9D8CFF")).
@@ -152,6 +157,26 @@ func NewTheme() *Theme {
 				Foreground(lipgloss.Color("#9D8CFF")).
 				Bold(true).
 				Padding(1, 0),
+
+			ThinkingText: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#818CF8")).
+				Italic(true),
+
+			InfoBox: lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("#5C6370")).
+				Padding(1).
+				MarginTop(1).
+				MarginBottom(1),
+
+			RefinedContext: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#E5C07B")).
+				Bold(true).
+				Padding(1, 2),
+
+			ContextBullet: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#61AFEF")).
+				Bold(true),
 		},
 		Emoji: ThemeEmoji{
 			TaskComplete:   "✅",
