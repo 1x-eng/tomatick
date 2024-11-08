@@ -21,13 +21,15 @@ type ContextManager struct {
 	au                 aurora.Aurora
 	presenter          *ui.ContextPresenter
 	currentContextFile string
+	llmClient          *llm.PerplexityAI
 }
 
-func NewContextManager(contextDir string, au aurora.Aurora, theme *ui.Theme) *ContextManager {
+func NewContextManager(contextDir string, au aurora.Aurora, theme *ui.Theme, llmClient *llm.PerplexityAI) *ContextManager {
 	return &ContextManager{
 		contextDir: contextDir,
 		au:         au,
 		presenter:  ui.NewContextPresenter(theme),
+		llmClient:  llmClient,
 	}
 }
 
@@ -57,13 +59,7 @@ func (cm *ContextManager) GetSessionContext(llmClient *llm.PerplexityAI) (string
 		return "", err
 	}
 
-	// After getting the context (either from file or input), offer refinement
-	refinedContext, err := cm.RefineContext(context, llmClient)
-	if err != nil {
-		return "", fmt.Errorf("failed to refine context: %w", err)
-	}
-
-	return refinedContext, nil
+	return context, nil
 }
 
 func (cm *ContextManager) getContextFromFile() (string, error) {
@@ -167,6 +163,12 @@ func (cm *ContextManager) getContextFromInput() (string, error) {
 
 	context := strings.Join(lines, "\n")
 
+	refinedContext, err := cm.RefineContext(context, cm.llmClient)
+	if err != nil {
+		fmt.Println(cm.au.Red("\nError during context refinement. Proceeding with original context."))
+		refinedContext = context
+	}
+
 	var saveContext bool
 	prompt := &survey.Confirm{
 		Message: "Would you like to save this context for future sessions?",
@@ -174,12 +176,12 @@ func (cm *ContextManager) getContextFromInput() (string, error) {
 	survey.AskOne(prompt, &saveContext)
 
 	if saveContext {
-		if err := cm.saveContext(context); err != nil {
+		if err := cm.saveContext(refinedContext); err != nil {
 			fmt.Println(cm.au.Red("Failed to save context:"), err)
 		}
 	}
 
-	return context, nil
+	return refinedContext, nil
 }
 
 func (cm *ContextManager) saveContext(context string) error {

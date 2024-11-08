@@ -193,8 +193,8 @@ func (cp *ContextPresenter) PresentRefinedContext(refinedContext string) string 
 
 	cleanContext := strings.TrimSpace(refinedContext)
 	if strings.HasPrefix(strings.ToLower(cleanContext), "context refinement complete") {
-		if idx := strings.Index(cleanContext, "•"); idx != -1 {
-			cleanContext = cleanContext[idx:]
+		if idx := strings.Index(strings.ToLower(cleanContext), "here's the comprehensive breakdown:"); idx != -1 {
+			cleanContext = strings.TrimSpace(cleanContext[idx+len("here's the comprehensive breakdown:"):])
 		}
 	}
 
@@ -206,7 +206,8 @@ Please review the refined context above:
 • Does it capture all key points?
 • Are there any missing details?`
 
-	sb.WriteString("\n" + cp.theme.Styles.SystemInstruction.Render(reviewPrompt))
+	sb.WriteString("\n" + cp.theme.Styles.InfoText.Render(reviewPrompt) + "\n")
+
 	return sb.String()
 }
 

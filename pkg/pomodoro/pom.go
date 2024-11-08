@@ -79,7 +79,7 @@ func (p *TomatickMemento) StartCycle() {
 	if p.cycleCount == 0 {
 		displayWelcomeMessage(p.auroraInstance)
 
-		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme)
+		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme, p.llmClient)
 
 		sessionContext, err := contextManager.GetSessionContext(p.llmClient)
 		if err != nil {
@@ -614,7 +614,7 @@ func displayWelcomeMessage(au aurora.Aurora) {
 	   ██║   ██║   ██║██╔████╔██║███████║   ██║   ██║██║     █████╔╝ 
 	   ██║   ██║   ██║██║╚██╔╝██║██╔══██║   ██║   ██║██║     ██╔═██╗ 
 	   ██║   ╚██████╔╝██║ ╚═╝ ██║██║  ██║   ██║   ██║╚██████╗██║  ██╗
-	   ╚═╝    ╚═══╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
+		╚═╝    ╚═══╝  ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝╚═╝  ╚═╝
 	`
 	welcomeText := `
 	🌟 Your Productivity Partner 🌟
