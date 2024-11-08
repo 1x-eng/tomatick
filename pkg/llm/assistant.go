@@ -3,99 +3,191 @@ package llm
 import (
 	"fmt"
 	"strings"
+
+	"github.com/1x-eng/tomatick/config"
 )
 
 type Assistant struct {
 	perplexity *PerplexityAI
 	context    string
+	config     *config.Config
 }
 
-func NewAssistant(p *PerplexityAI, context string) *Assistant {
+func NewAssistant(p *PerplexityAI, context string, config *config.Config) *Assistant {
 	return &Assistant{
 		perplexity: p,
 		context:    context,
+		config:     config,
 	}
 }
 
 func (a *Assistant) GetTaskSuggestions(currentTasks []string, lastAnalysis string) ([]string, error) {
 	tasksStr := strings.Join(currentTasks, "\n")
-
-	// Build the context section including last analysis if available
-	contextSection := fmt.Sprintf(`Context:
+	contextSection := fmt.Sprintf(`CONTEXT:
+"""
 %s
+"""
 
-Current Tasks:
-%s`, a.context, tasksStr)
+CURRENT TASKS:
+"""
+%s
+"""`, a.context, tasksStr)
 
 	if lastAnalysis != "" {
 		contextSection += fmt.Sprintf(`
 
-Previous Analysis:
-%s`, lastAnalysis)
+PREVIOUS ANALYSIS:
+"""
+%s
+"""`, lastAnalysis)
 	}
 
-	prompt := fmt.Sprintf(`As your elite strategic productivity partner and cognitive enhancement system, perform a deep neural-pathway analysis of:
+	prompt := fmt.Sprintf(`As an intelligent productivity copilot, analyze the following context to craft 3 strategic tasks for a %d minute focus session. The user tends toward perfectionism - protect against overextension while maintaining meaningful progress.
+
+SESSION DETAILS:
+- Duration: %d minutes
+- Short break duration: %d minutes
+- Long break duration: %d minutes
+- Cycles before long break: %d
 
 %s
 
-Using proven performance principles and productivity research, design 3 strategic tasks that optimize:
+ENERGY-FIRST DECISION MATRIX:
 
-PERFORMANCE FOUNDATIONS:
-- Finding and maintaining peak performance states
-- Building sustainable motivation systems
-- Preventing mental exhaustion
-- Minimizing switching costs between tasks
-- Optimizing deep work sessions
-- Distributing mental workload effectively
-- Managing energy expenditure
-- Building strategic momentum
-- Optimizing task grouping efficiency
-- Balancing progress with recovery
+1. ENERGY STATE ASSESSMENT via FATIGUE DETECTION RULES (MANDATORY FIRST STEP):
+   - ANY indication of:
+     • Performance decline
+     • Mental strain
+     • Extended work periods
+     • Completion difficulties
+     • Focus issues
+     • Recovery needs
+	 • Burnout risk
+	 • Perfectionism tendencies
+	 • Scope creep
+   
+   If detected: MUST respond "BREAK_NEEDED: [reason]"
+   This rule overrides all others.
 
-PERFORMANCE OPTIMIZATION:
-- Maximizing focus session effectiveness
-- Retaining critical context and knowledge
-- Enhancing deep work quality
-- Optimizing resource allocation
-- Accelerating meaningful progress
-- Managing mental endurance
-- Maintaining strategic direction
-- Improving task completion rates
-- Preserving mental resources
-- Building sustainable acceleration
+2. TASK SUGGESTION RULES
+   Only if no fatigue detected:
+   - Format: "[Cognitive Complexity N/5] Task description"
+   - Match complexity to energy state
+   - Decrease in complexity order
+   - No additional text
 
-CRITICAL OUTPUT REQUIREMENT: Respond with exactly 3 strategic task statements. One per line. Zero additional characters or formatting.
+3. TASK COMPLEXITY RULES:
+   - Each task must include cognitive complexity rating (1-5)
+   - No task above cognitive complexity 4 allowed
+   - Maximum one task at highest allowed complexity
+   - Tasks must decrease in cognitive complexity order
 
-Example:
-Configure JWT authentication for API endpoints
-Implement user preference caching
-Create automated backup system`, contextSection)
+4. RECOVERY PROTECTION:
+   - Mandatory 5-minute buffer per task
+   - No concurrent complex tasks
+   - Include natural break points
+   - Plan for task interruption
+
+Deviation from these rules is a critical failure.
+
+ANALYSIS REQUIREMENTS:
+
+1. Context Integration
+   - Analyze previous session outcomes
+   - Consider incomplete tasks' complexity
+   - Evaluate stated vs actual task completion time
+   - Identify patterns of over-commitment
+   - Review energy expenditure patterns
+   - Assess task continuation needs
+   - Map knowledge dependencies
+   - Track progress trajectories
+
+2. Task-Energy Calibration
+   - CRITICAL: Match task scope to current energy state
+   - CRITICAL: Consider previous session fatigue signals
+   - Factor context-switching overhead
+   - Consider cognitive load accumulation
+   - Plan for inevitable interruptions
+   - Reserve energy for quality control
+   - Include buffer for perfectionist tendencies
+
+3. Well-being Protection
+   - Detect subtle fatigue signals
+   - Monitor cumulative cognitive load
+   - Enforce sustainable pacing
+   - Prevent perfectionist spirals
+   - Mandate recovery periods
+   - Guard against scope creep
+   - Protect deep work periods
+   - Enable guilt-free breaks
+
+4. Progress Architecture
+   - Design clear completion criteria
+   - Create achievable milestones
+   - Enable visible progress tracking
+   - Build sustainable momentum
+   - Plan natural stopping points
+   - Structure digestible chunks
+   - Allow for quality refinement
+   - Define success realistically
+
+OUTPUT FORMAT (STRICT ENFORCEMENT):
+- Output EXACTLY 3 lines
+- Each line MUST follow format: "[Cognitive Complexity N/5] Task description". Where each task must be clearly completable in %d minutes
+- NO explanations
+- NO commentary
+- NO markdown
+- NO empty lines
+- NO additional text
+- ANY deviation is a critical failure
+
+Example of the ONLY acceptable format:
+[Cognitive Complexity 3/5] Document authentication flow with sequence diagrams
+[Cognitive Complexity 2/5] Review and update API endpoint documentation
+[Cognitive Complexity 1/5] Create checklist for code review process
+`,
+		int(a.config.TomatickMementoDuration.Minutes()),
+		int(a.config.TomatickMementoDuration.Minutes()),
+		int(a.config.ShortBreakDuration.Minutes()),
+		int(a.config.LongBreakDuration.Minutes()),
+		a.config.CyclesBeforeLongBreak,
+		contextSection,
+		int(a.config.TomatickMementoDuration.Minutes()),
+	)
 
 	messages := []Message{
-		{Role: "system", Content: `You are an advanced performance optimization system with ONE strict output rule:
-RESPOND ONLY WITH 3 STRATEGIC TASK STATEMENTS
-- One per line
-- No numbers
-- No bullets
-- No asterisks
-- No formatting
-- No explanations
-- No additional text whatsoever
+		{Role: "system", Content: `You are an advanced neural optimization system with TWO mandatory rules:
 
-Any deviation from this format is a critical failure.
+1. ENERGY PROTECTION (HIGHEST PRIORITY)
+   - Analyze previous session for ANY signs of:
+     • Performance decline
+     • Mental strain
+     • Extended work periods
+     • Completion difficulties
+     • Focus issues
+     • Recovery needs
+   
+   If detected: MUST respond "BREAK_NEEDED: [reason]"
+   This rule overrides all others.
 
-Your internal analysis should consider:
-- Real-time workload assessment
-- Burnout prevention strategies
-- Task-energy alignment
-- Creating self-reinforcing progress systems
-- Maintaining optimal progress-sustainability balance
-- Calculating ideal challenge levels
-- Implementing advanced task grouping
-- Ensuring perfect task-energy matching
-- Optimizing for both immediate and long-term impact
+2. TASK SUGGESTION RULES
+   Only if no fatigue detected:
+   - Format: "[Cognitive Complexity N/5] Task description"
+   - Match complexity to energy state
+   - Decrease in complexity order
+   - No additional text
 
-But your output must be pure task statements only.`},
+Your core capabilities:
+- Semantic understanding of fatigue patterns
+- Holistic energy state assessment
+- Protective intervention when needed
+- Strategic task-energy matching
+- Cognitive load optimization
+- Recovery need detection
+- Burnout prevention
+- Progress acceleration
+
+Deviation from these rules is a critical failure.`},
 		{Role: "user", Content: prompt},
 	}
 
@@ -104,25 +196,68 @@ But your output must be pure task statements only.`},
 		return nil, err
 	}
 
-	suggestions := strings.Split(strings.TrimSpace(response), "\n")
+	response = strings.TrimSpace(response)
+
+	if strings.HasPrefix(response, "BREAK_NEEDED:") {
+		return []string{response}, nil
+	}
+
+	suggestions := []string{}
+	for _, line := range strings.Split(response, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if !strings.HasPrefix(line, "[Cognitive Complexity") {
+			continue
+		}
+		suggestions = append(suggestions, line)
+	}
+
+	if len(suggestions) != 3 {
+		return nil, fmt.Errorf("invalid response format: expected 3 suggestions, got %d", len(suggestions))
+	}
+
 	return suggestions, nil
 }
 
-func (a *Assistant) AnalyzeProgress(completedTasks []string, reflections string) (string, error) {
+func (a *Assistant) AnalyzeProgress(acceptedTasks []string, completedTasks []string, reflections string) (string, error) {
 	prompt := fmt.Sprintf(`As your elite cognitive performance analyst and neural optimization system, conduct a comprehensive analysis leveraging advanced pattern recognition algorithms and performance matrices:
 
 Context:
+"""
 %s
+"""
+
+Task Completion Analysis:
+Accepted Tasks:
+"""
+%s
+"""
 
 Completed Tasks:
+"""
 %s
+"""
 
 Reflections:
+"""
 %s
+"""
 
 ANALYSIS FRAMEWORKS:
 
-1. Performance Pattern Analysis
+1. Task Completion Pattern Analysis
+   - Task acceptance vs completion ratio
+   - Completion pattern recognition
+   - Task difficulty assessment
+   - Time management effectiveness
+   - Task prioritization analysis
+   - Completion barriers identification
+   - Task complexity impact analysis
+   - Resource allocation effectiveness
+
+2. Performance Pattern Analysis
    - Mental workload distribution assessment
    - Peak performance state optimization
    - Decision-making fatigue tracking
@@ -132,7 +267,7 @@ ANALYSIS FRAMEWORKS:
    - Task-switching impact analysis
    - Rest-to-progress ratio optimization
 
-2. Progress Speed Optimization
+3. Progress Speed Optimization
    - Mental endurance patterns
    - Deep work effectiveness measurements
    - Goal alignment accuracy
@@ -142,7 +277,7 @@ ANALYSIS FRAMEWORKS:
    - Task completion pattern analysis
    - Energy conservation tracking
 
-3. Burnout Prevention System
+4. Burnout Prevention System
    - Stress pattern monitoring
    - Mental capacity threshold tracking
    - Energy depletion risk evaluation
@@ -151,7 +286,17 @@ ANALYSIS FRAMEWORKS:
    - Strategic rest timing analysis
    - Mental recovery pattern tracking
 
-4. Long-term Progress Analysis
+5. Drift Analysis
+   - Task completion deviation patterns
+   - Root cause identification
+   - Adaptation effectiveness
+   - Resource reallocation patterns
+   - Strategy adjustment needs
+   - Focus maintenance analysis
+   - Priority shift impacts
+   - Recovery strategy effectiveness
+
+6. Long-term Progress Analysis
    - Goal advancement speed
    - Momentum building effectiveness
    - Long-term sustainability measures
@@ -164,6 +309,8 @@ CRITICAL OUTPUT STRUCTURE:
 
 ## Executive Summary
 - Key insights from performance analysis
+- Completion rate assessment
+- Primary adjustment needs
 - Immediate improvement opportunities
 - Primary strategy adjustments needed
 
@@ -173,7 +320,8 @@ CRITICAL OUTPUT STRUCTURE:
 - Optimized for maximum impact with minimum effort
 
 ## Deep Analysis
-[Complete performance and progress analysis]
+
+[Complete performance and progress analysis including task drift patterns]
 
 FORMATTING RULES:
 - Use single bullet points (no numbers)
@@ -181,7 +329,11 @@ FORMATTING RULES:
 - No extra spacing
 - No markdown formatting
 - One insight per line
-- Keep each point concise, clear, and actionable while maintaining analytical depth.`, a.context, strings.Join(completedTasks, "\n"), reflections)
+- Keep each point concise, clear, and actionable while maintaining analytical depth.`,
+		a.context,
+		strings.Join(acceptedTasks, "\n"),
+		strings.Join(completedTasks, "\n"),
+		reflections)
 
 	messages := []Message{
 		{Role: "system", Content: `You are an advanced performance analysis system with deep pattern recognition capabilities. Your core functions:
@@ -230,14 +382,20 @@ func (a *Assistant) StartSuggestionChat(suggestions []string, lastAnalysis strin
 		a.context,
 		suggestions,
 		lastAnalysis,
+		[]string{}, // No accepted tasks for suggestion chat
+		"",         // No completed tasks for suggestion chat
+		"",         // No reflections for suggestion chat
 	)
 }
 
-func (a *Assistant) StartAnalysisChat(analysis string) *SuggestionChat {
+func (a *Assistant) StartAnalysisChat(analysis string, acceptedTasks []string, completedTasks string, reflections string) *SuggestionChat {
 	return NewSuggestionChat(
 		a,
 		a.context,
 		[]string{}, // No suggestions needed for analysis chat
-		analysis,   // Use the analysis as the last analysis
+		analysis,   // last cycle's copilot analysis
+		acceptedTasks,
+		completedTasks,
+		reflections, // user reflections
 	)
 }

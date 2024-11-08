@@ -179,8 +179,8 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	}()
 
 	// Perform AI analysis
-	assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
-	analysis, err := assistant.AnalyzeProgress(strings.Split(completedTasks, "\n"), reflections)
+	assistant := llm.NewAssistant(p.llmClient, p.sessionContext, p.cfg)
+	analysis, err := assistant.AnalyzeProgress(p.currentTasks, strings.Split(completedTasks, "\n"), reflections)
 
 	// Stop the spinner
 	done <- true
@@ -209,8 +209,8 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 			survey.AskOne(prompt, &discussAnalysis)
 
 			if discussAnalysis {
-				assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
-				analysisChat := assistant.StartAnalysisChat(analysis)
+				assistant := llm.NewAssistant(p.llmClient, p.sessionContext, p.cfg)
+				analysisChat := assistant.StartAnalysisChat(analysis, tasks, completedTasks, reflections)
 				p.handleAnalysisChat(analysisChat)
 			}
 		}
@@ -290,7 +290,7 @@ func (p *TomatickMemento) captureTasks() []string {
 				}
 			}()
 
-			assistant := llm.NewAssistant(p.llmClient, p.sessionContext)
+			assistant := llm.NewAssistant(p.llmClient, p.sessionContext, p.cfg)
 			suggestions, err := assistant.GetTaskSuggestions(tasks, p.lastAnalysis)
 			done <- true
 			fmt.Print("\r") // Clear spinner line
