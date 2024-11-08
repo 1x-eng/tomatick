@@ -38,33 +38,33 @@ Previous Analysis:
 
 %s
 
-Through advanced pattern recognition, cognitive load analysis, and performance optimization algorithms, architect 3 precision-engineered tasks that leverage:
+Using proven performance principles and productivity research, design 3 strategic tasks that optimize:
 
-COGNITIVE ARCHITECTURE:
-- Neural pathway optimization and flow state triggers
-- Dopamine-reward loop engineering
-- Decision fatigue prevention mechanisms
-- Context-switching cost minimization
-- Deep focus session calibration
-- Cognitive load distribution patterns
-- Energy expenditure optimization
-- Strategic momentum compounding
-- Task-batching efficiency curves
-- Recovery-progress ratio balancing
+PERFORMANCE FOUNDATIONS:
+- Finding and maintaining peak performance states
+- Building sustainable motivation systems
+- Preventing mental exhaustion
+- Minimizing switching costs between tasks
+- Optimizing deep work sessions
+- Distributing mental workload effectively
+- Managing energy expenditure
+- Building strategic momentum
+- Optimizing task grouping efficiency
+- Balancing progress with recovery
 
-PERFORMANCE MATRICES:
-- Flow state entry/exit optimization
-- Context retention maximization
-- Deep work session effectiveness
-- Resource utilization efficiency
-- Progress velocity optimization
-- Cognitive stamina management
-- Strategic alignment accuracy
-- Task completion dynamics
-- Mental energy conservation
-- Sustainable progress acceleration
+PERFORMANCE OPTIMIZATION:
+- Maximizing focus session effectiveness
+- Retaining critical context and knowledge
+- Enhancing deep work quality
+- Optimizing resource allocation
+- Accelerating meaningful progress
+- Managing mental endurance
+- Maintaining strategic direction
+- Improving task completion rates
+- Preserving mental resources
+- Building sustainable acceleration
 
-CRITICAL OUTPUT REQUIREMENT: Respond with exactly 3 raw task statements. One per line. Zero additional characters or formatting.
+CRITICAL OUTPUT REQUIREMENT: Respond with exactly 3 strategic task statements. One per line. Zero additional characters or formatting.
 
 Example:
 Configure JWT authentication for API endpoints
@@ -72,8 +72,8 @@ Implement user preference caching
 Create automated backup system`, contextSection)
 
 	messages := []Message{
-		{Role: "system", Content: `You are an advanced cognitive optimization system with ONE strict output rule:
-RESPOND ONLY WITH 3 RAW TASK STATEMENTS
+		{Role: "system", Content: `You are an advanced performance optimization system with ONE strict output rule:
+RESPOND ONLY WITH 3 STRATEGIC TASK STATEMENTS
 - One per line
 - No numbers
 - No bullets
@@ -84,16 +84,16 @@ RESPOND ONLY WITH 3 RAW TASK STATEMENTS
 
 Any deviation from this format is a critical failure.
 
-Your internal processing should still:
-- Deploy real-time cognitive load analysis
-- Execute predictive burnout prevention
-- Optimize task-energy alignment
-- Engineer self-reinforcing progress loops
-- Maintain perfect equilibrium between progress and sustainability
-- Calculate optimal challenge-skill balance
-- Execute advanced task-batching algorithms
-- Ensure perfect task-energy alignment
-- Optimize for both immediate impact and sustainable progress
+Your internal analysis should consider:
+- Real-time workload assessment
+- Burnout prevention strategies
+- Task-energy alignment
+- Creating self-reinforcing progress systems
+- Maintaining optimal progress-sustainability balance
+- Calculating ideal challenge levels
+- Implementing advanced task grouping
+- Ensuring perfect task-energy matching
+- Optimizing for both immediate and long-term impact
 
 But your output must be pure task statements only.`},
 		{Role: "user", Content: prompt},
@@ -120,60 +120,60 @@ Completed Tasks:
 Reflections:
 %s
 
-ANALYTICAL FRAMEWORKS TO DEPLOY:
+ANALYSIS FRAMEWORKS:
 
-1. Neural Pattern Recognition Matrix
-   - Deep cognitive load distribution analysis
-   - Flow state entry/exit pattern optimization
-   - Decision fatigue accumulation curves
-   - Mental energy expenditure optimization
-   - Strategic momentum compound effects
-   - Task-energy alignment coefficients
-   - Context-switching overhead patterns
-   - Recovery-progress ratio calibration
+1. Performance Pattern Analysis
+   - Mental workload distribution assessment
+   - Peak performance state optimization
+   - Decision-making fatigue tracking
+   - Energy management optimization
+   - Progress momentum effects
+   - Task-energy matching patterns
+   - Task-switching impact analysis
+   - Rest-to-progress ratio optimization
 
-2. Performance Velocity Optimization
-   - Cognitive stamina utilization curves
-   - Deep work session effectiveness metrics
-   - Strategic alignment accuracy patterns
-   - Resource utilization efficiency maps
-   - Progress acceleration vectors
-   - Flow state duration optimization
-   - Task completion dynamics analysis
-   - Mental energy conservation indices
+2. Progress Speed Optimization
+   - Mental endurance patterns
+   - Deep work effectiveness measurements
+   - Goal alignment accuracy
+   - Resource usage efficiency tracking
+   - Progress acceleration factors
+   - Peak performance duration optimization
+   - Task completion pattern analysis
+   - Energy conservation tracking
 
-3. Predictive Burnout Prevention System
-   - Stress accumulation pattern recognition
-   - Cognitive load threshold monitoring
-   - Energy depletion risk assessment
-   - Recovery requirement forecasting
-   - Sustainable pace optimization
-   - Strategic deload timing analysis
-   - Mental resource regeneration mapping
+3. Burnout Prevention System
+   - Stress pattern monitoring
+   - Mental capacity threshold tracking
+   - Energy depletion risk evaluation
+   - Recovery needs forecasting
+   - Sustainable rhythm optimization
+   - Strategic rest timing analysis
+   - Mental recovery pattern tracking
 
-4. Strategic Trajectory Computation
-   - Objective advancement velocity
+4. Long-term Progress Analysis
+   - Goal advancement speed
    - Momentum building effectiveness
-   - Long-term sustainability indices
-   - Progress compound interest factors
-   - Strategic alignment vectors
-   - Impact-to-effort optimization
-   - Resource utilization efficiency
+   - Long-term sustainability measures
+   - Compound progress factors
+   - Strategic direction alignment
+   - Impact-versus-effort optimization
+   - Resource efficiency tracking
 
 CRITICAL OUTPUT STRUCTURE:
 
 ## Executive Summary
-- Critical insights from neural pattern analysis
-- Immediate optimization opportunities
-- Primary strategic adjustments required
+- Key insights from performance analysis
+- Immediate improvement opportunities
+- Primary strategy adjustments needed
 
 ## Immediate Action
-- Three precisely engineered next actions
-- Each calibrated for immediate implementation
-- Designed for maximum impact-to-effort ratio
+- Three carefully designed next actions
+- Each ready for immediate implementation
+- Optimized for maximum impact with minimum effort
 
 ## Deep Analysis
-[Complete neural pathway and performance analysis]
+[Complete performance and progress analysis]
 
 FORMATTING RULES:
 - Use single bullet points (no numbers)
@@ -181,38 +181,38 @@ FORMATTING RULES:
 - No extra spacing
 - No markdown formatting
 - One insight per line
-- Keep each point concise, without losing clarity and actionability while maintaining analytical depth.`, a.context, strings.Join(completedTasks, "\n"), reflections)
+- Keep each point concise, clear, and actionable while maintaining analytical depth.`, a.context, strings.Join(completedTasks, "\n"), reflections)
 
 	messages := []Message{
-		{Role: "system", Content: `You are an advanced cognitive optimization system with neural-level pattern recognition capabilities. Your core functions:
+		{Role: "system", Content: `You are an advanced performance analysis system with deep pattern recognition capabilities. Your core functions:
 
-ANALYTICAL CAPABILITIES:
-- Deploy quantum-grade pattern recognition
-- Execute real-time performance optimization
-- Maintain continuous cognitive load monitoring
-- Perform predictive burnout analysis
-- Calculate neural pathway optimization
-- Analyze meta-patterns in performance data
-- Monitor flow state variables
-- Assess strategic momentum compounds
+ANALYSIS CAPABILITIES:
+- Identify complex performance patterns
+- Optimize real-time performance
+- Monitor ongoing mental workload
+- Predict and prevent burnout
+- Optimize performance pathways
+- Analyze performance meta-patterns
+- Track peak performance states
+- Measure progress momentum
 
-OPTIMIZATION PROTOCOLS:
-- Engineer perfect task-energy alignment
-- Calculate optimal cognitive load distribution
-- Maximize strategic momentum building
-- Ensure sustainable progress acceleration
-- Optimize recovery-progress ratios
-- Calibrate flow state parameters
-- Balance cognitive resource allocation
-- Design strategic deload timing
+OPTIMIZATION METHODS:
+- Match tasks to energy levels
+- Distribute mental workload optimally
+- Build strategic momentum
+- Ensure sustainable progress
+- Balance recovery and progress
+- Optimize peak performance states
+- Manage mental resources
+- Plan strategic rest periods
 
 OUTPUT REQUIREMENTS:
 Structure analysis in three precise layers & present exactly in this order:
-1. Executive Summary (Neural-level insights)
-2. Immediate Action (Engineered next steps)
-3. Deep Analysis (Complete performance analysis)
+1. Executive Summary (Key performance insights)
+2. Immediate Action (Strategic next steps)
+3. Deep Analysis (Complete performance assessment)
 
-Maintain maximum analytical depth while ensuring clarity and actionability in presentation.`},
+Maintain comprehensive analysis while ensuring clarity and actionability in presentation.`},
 		{Role: "user", Content: prompt},
 	}
 
