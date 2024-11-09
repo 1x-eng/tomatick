@@ -123,6 +123,7 @@ func (cm *ContextManager) getContextFromFile() (string, error) {
 	deltaContext := strings.Join(lines, "\n")
 
 	if deltaContext == "" {
+		fmt.Println(cm.au.BrightYellow("No additional context provided. Proceeding with original context."))
 		return string(content), nil
 	}
 
@@ -143,8 +144,28 @@ func (cm *ContextManager) getContextFromFile() (string, error) {
 		return updatedContent, nil
 	}
 
-	// Return combined context for session only
-	return string(content) + "\n\n=== Session Context ===\n" + deltaContext, nil
+	enrichedContext := string(content) + "\n\n=== Session Context ===\n" + deltaContext
+
+	// Refine enriched context with copilot - if user wants to
+	refinedContext, err := cm.RefineContext(enrichedContext, cm.llmClient)
+	if err != nil {
+		fmt.Println(cm.au.Red("\nError during context refinement. Proceeding with original context."))
+		refinedContext = enrichedContext
+	}
+
+	var saveRefinedContext bool
+	saveRefinedContextPrompt := &survey.Confirm{
+		Message: "Would you like to save this refined context for future sessions?",
+	}
+	survey.AskOne(saveRefinedContextPrompt, &saveRefinedContext)
+
+	if saveRefinedContext {
+		if err := cm.saveContext(refinedContext); err != nil {
+			fmt.Println(cm.au.Red("Failed to save context:"), err)
+		}
+	}
+
+	return refinedContext, nil
 }
 
 func (cm *ContextManager) getContextFromInput() (string, error) {
