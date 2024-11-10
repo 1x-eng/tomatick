@@ -634,7 +634,6 @@ func (p *TomatickMemento) FlushSuggestions() {
 }
 
 func (p *TomatickMemento) handleSuggestionChat() {
-	// Display chat session start
 	chatBorder := strings.Repeat(p.theme.Emoji.ChatDivider, 50)
 	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
 	fmt.Println(p.theme.Styles.ChatHeader.Render(
@@ -652,29 +651,33 @@ func (p *TomatickMemento) handleSuggestionChat() {
 			p.theme.Styles.AIMessage.Render(suggestion))
 	}
 
-	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss these suggestions (type 'exit' to end chat)"))
+	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss these suggestions (type 'done' when finished or 'exit' to end chat)"))
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Printf("%s", p.theme.Styles.ChatPrompt.PaddingTop(0).PaddingBottom(0).Render(p.theme.Emoji.UserInput+" "))
 
-		if !scanner.Scan() {
-			break
+		var lines []string
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "exit" {
+				fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+				fmt.Println(p.theme.Styles.ChatHeader.Render(
+					fmt.Sprintf("%s Chat session ended %s",
+						p.theme.Emoji.ChatEnd,
+						p.theme.Emoji.Success)))
+				fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+				return
+			}
+			if line == "done" {
+				break
+			}
+			lines = append(lines, line)
 		}
 
-		input := strings.TrimSpace(scanner.Text())
+		input := strings.TrimSpace(strings.Join(lines, "\n"))
 		if input == "" {
 			continue
-		}
-
-		if input == "exit" {
-			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
-			fmt.Println(p.theme.Styles.ChatHeader.Render(
-				fmt.Sprintf("%s Chat session ended %s",
-					p.theme.Emoji.ChatEnd,
-					p.theme.Emoji.Success)))
-			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
-			break
 		}
 
 		// Show thinking spinner
@@ -723,29 +726,33 @@ func (p *TomatickMemento) handleAnalysisChat(chat *llm.SuggestionChat) {
 			p.theme.Emoji.Brain)))
 	fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
 
-	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss the analysis (type 'exit' to end chat)"))
+	fmt.Println(p.theme.Styles.SystemInstruction.Render("\nAsk questions or discuss the analysis (type 'done' when finished or 'exit' to end chat)"))
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Printf("%s", p.theme.Styles.ChatPrompt.PaddingTop(0).PaddingBottom(0).Render(p.theme.Emoji.UserInput+" "))
 
-		if !scanner.Scan() {
-			break
+		var lines []string
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "exit" {
+				fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+				fmt.Println(p.theme.Styles.ChatHeader.Render(
+					fmt.Sprintf("%s Chat session ended %s",
+						p.theme.Emoji.ChatEnd,
+						p.theme.Emoji.Success)))
+				fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
+				return
+			}
+			if line == "done" {
+				break
+			}
+			lines = append(lines, line)
 		}
 
-		input := strings.TrimSpace(scanner.Text())
+		input := strings.TrimSpace(strings.Join(lines, "\n"))
 		if input == "" {
 			continue
-		}
-
-		if input == "exit" {
-			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
-			fmt.Println(p.theme.Styles.ChatHeader.Render(
-				fmt.Sprintf("%s Chat session ended %s",
-					p.theme.Emoji.ChatEnd,
-					p.theme.Emoji.Success)))
-			fmt.Println(p.theme.Styles.ChatBorder.Render(chatBorder))
-			break
 		}
 
 		spinner := ui.NewSpinner(p.theme.Styles.Spinner.
