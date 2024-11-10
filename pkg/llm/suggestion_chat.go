@@ -3,6 +3,7 @@ package llm
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type SuggestionChat struct {
@@ -39,6 +40,13 @@ func (sc *SuggestionChat) Chat(userInput string) (string, error) {
 	var systemPrompt string
 	if len(sc.suggestions) > 0 {
 		systemPrompt = `You are an advanced task optimization assistant engaged in a discussion about specific task suggestions. Your core responsibilities:
+
+TIME AWARENESS:
+- Current date time is: %s
+- Adjust suggestions and responses based on time of day
+- Consider user's likely energy levels and focus capacity
+- Recommend tasks that are most suitable for the current time
+- Factor in typical work patterns and circadian rhythms
 
 CONTEXT AWARENESS:
 - Maintain strict relevance to the session context and current suggestions
@@ -96,6 +104,13 @@ Current Session Context:
 `
 	} else {
 		systemPrompt = `You are an advanced performance analysis assistant engaged in a discussion about the session analysis. Your core responsibilities:
+		
+TIME AWARENESS:
+- Current date time is: %s
+- Consider time-based patterns in task completion
+- Analyze how time of day affected task outcomes
+- Provide insights on optimal timing for different tasks
+- Factor in typical work patterns and circadian rhythms
 
 ANALYSIS CLARIFICATION:
 - Provide detailed explanations of analysis points
@@ -156,11 +171,12 @@ User's Original Reflections:
 """`
 	}
 
+	currentTime := time.Now().Format("2006-01-02 15:04 Z07:00")
 	var args []interface{}
 	if len(sc.suggestions) > 0 {
-		args = []interface{}{sc.lastAnalysis, sc.context, strings.Join(sc.suggestions, "\n")}
+		args = []interface{}{currentTime, sc.lastAnalysis, sc.context, strings.Join(sc.suggestions, "\n")}
 	} else {
-		args = []interface{}{sc.lastAnalysis, sc.context, sc.completedTasks, sc.reflections}
+		args = []interface{}{currentTime, sc.lastAnalysis, sc.context, sc.completedTasks, sc.reflections}
 	}
 
 	messages := []Message{

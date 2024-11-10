@@ -2,6 +2,7 @@ package llm
 
 import (
 	"fmt"
+	"time"
 )
 
 type ContextRefiner struct {
@@ -33,6 +34,19 @@ YOUR ROLE:
 • Ensure optimal cognitive performance through strategic context refinement
 • Guide users toward measurable success metrics for each session
 • Facilitate deep work states through clear objective setting
+
+TEMPORAL CONTEXT CONSIDERATIONS:
+• Time of Day - Align tasks with optimal cognitive periods
+  - Morning (6-12): Complex problem-solving and creative work
+  - Afternoon (12-17): Collaborative and routine tasks
+  - Evening (17+): Review and planning activities
+• Day of Week - Consider work patterns and energy levels
+  - Weekdays vs Weekends
+  - Meeting-heavy days vs Focus days
+• Calendar Context - Account for:
+  - Upcoming deadlines or milestones
+  - Scheduled meetings or commitments
+  - Time zone considerations for collaborative work
 
 CONTEXT REFINEMENT OBJECTIVES:
 1. Clarity - Eliminate ambiguity in task definitions
@@ -76,12 +90,16 @@ QUESTIONING APPROACH:
    • What potential risks or challenges should be considered?
 
 QUESTION GUIDELINES:
-• Make each question specific and unambiguous
-• Focus on one aspect at a time
-• Use clear, everyday language
-• Avoid compound or leading questions
-• Dig deeper when answers reveal new areas needing clarity
-• If user response is off-topic:
+1. Begin with temporal context assessment:
+   • How does the current time affect task priority?
+   • Are there time-sensitive dependencies?
+   • What is the optimal execution window?
+2. Make each question specific and unambiguous
+3. Focus on one aspect at a time
+4. Use clear, everyday language
+5. Avoid compound or leading questions
+6. Dig deeper when answers reveal new areas needing clarity
+7. If user response is off-topic:
   • Acknowledge briefly
   • Redirect gently back to main topic
   • Continue with relevant questions
@@ -121,10 +139,46 @@ IMPORTANT:
 - Do not add commentary or analysis outside the specified format`,
 		},
 		{
-			Role:    "user",
-			Content: fmt.Sprintf("Here's the initial context to refine:\n\n%s", cr.context),
+			Role: "user",
+			Content: fmt.Sprintf("Here's the initial context to refine:\n\nCurrent Date/Time: %s\nDay of Week: %s\nHour Category: %s\n\n%s",
+				time.Now().Format("2006-01-02 15:04 Z07:00"),
+				time.Now().Weekday().String(),
+				getHourCategory(time.Now().Hour()),
+				cr.context),
 		},
 	}
 
 	return NewRefinementChat(cr.perplexity, messages), nil
+}
+
+func getHourCategory(hour int) string {
+	switch {
+	case hour >= 5 && hour < 8:
+		return "Early Morning (Optimal for: personal excellence - meditation, exercise, reading, planning the day ahead)"
+
+	case hour >= 8 && hour < 12:
+		return "Peak Morning (Optimal for: complex problem-solving, creative work, critical thinking, important meetings, learning new skills)"
+
+	case hour >= 12 && hour < 14:
+		return "Midday (Ideal for: lunch break, light exercise, family meal, quick errands, social connections, mindful rest)"
+
+	case hour >= 14 && hour < 17:
+		return "Afternoon (Suitable for: collaborative work, routine tasks, administrative duties, follow-ups, mentoring)"
+
+	case hour >= 17 && hour < 19:
+		return "Early Evening (Priority for: family time, children's activities, household management, meal preparation, light chores)"
+
+	case hour >= 19 && hour < 21:
+		return "Evening (Focus on: family bonding, personal hobbies, relationship building, gentle exercise, planning next day)"
+
+	case hour >= 21 && hour < 23:
+		return "Late Evening (Transition to: relaxation, reflection, light reading, mindfulness, preparing for rest)"
+
+	case hour >= 23 || hour < 5:
+		return "Night (Protected time for: sleep, recovery, restoration - avoid scheduling tasks unless absolutely necessary)"
+
+	default:
+		// This should never happen. just complying with the switch statement.
+		return "Night (Protected time for: sleep, recovery, restoration)"
+	}
 }
