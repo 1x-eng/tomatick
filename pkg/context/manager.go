@@ -276,6 +276,7 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 	scanner := bufio.NewScanner(os.Stdin)
 	refinementComplete := false
 	var lastResponse string
+	var finalRefinedContext string
 
 	for !refinementComplete {
 		// Show thinking indicator with new style
@@ -314,11 +315,11 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 		// Check if refinement is complete
 		if strings.Contains(strings.ToLower(response), "context refinement complete") {
 			refinementComplete = true
-			// Clean up the response to remove redundant header
 			cleanResponse := response
 			if idx := strings.Index(strings.ToLower(response), "here's what i've learned:"); idx != -1 {
 				cleanResponse = response[idx+len("here's what i've learned:"):]
 			}
+			finalRefinedContext = cleanResponse
 			fmt.Printf("\n%s %s\n",
 				cm.au.BrightCyan("🤖"),
 				cm.presenter.GetTheme().Styles.AIMessage.Render(cleanResponse))
@@ -374,17 +375,11 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 			}
 		}
 	}()
-
-	refinedContext, err := chat.GetRefinedContext()
 	done <- true
 	fmt.Print("\r\033[K")
 
-	if err != nil {
-		return originalContext, fmt.Errorf("chat error: %w", err)
-	}
-
 	// Present the refined context for approval
-	fmt.Print(cm.presenter.PresentRefinedContext(refinedContext))
+	fmt.Print(cm.presenter.PresentRefinedContext(finalRefinedContext))
 
 	var approved bool
 	for !approved {
@@ -425,7 +420,7 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 				}
 			}()
 
-			refinedContext, err = chat.RequestContextModification(originalContext, userFeedback)
+			refinedContext, err := chat.RequestContextModification(originalContext, userFeedback)
 			done <- true
 			fmt.Print("\r\033[K")
 
@@ -453,7 +448,7 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 			filename = "copilot_refined_context_" + time.Now().Format("2006-01-02_15-04-05") + ".txt"
 		}
 
-		if err := os.WriteFile(filepath.Join(cm.contextDir, filename), []byte(refinedContext), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(cm.contextDir, filename), []byte(finalRefinedContext), 0644); err != nil {
 			return originalContext, fmt.Errorf("failed to save refined context: %w", err)
 		}
 
@@ -462,5 +457,5 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 			cm.presenter.GetTheme().Styles.InfoText.Render(filename))
 	}
 
-	return refinedContext, nil
+	return finalRefinedContext, nil
 }

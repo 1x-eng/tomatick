@@ -2,7 +2,6 @@ package llm
 
 import (
 	"fmt"
-	"strings"
 )
 
 type RefinementChat struct {
@@ -65,7 +64,7 @@ Include ANY and ALL key details while maintaining temporal references where appl
 		return "", err
 	}
 
-	return rc.CleanRefinedContext(response), nil
+	return response, nil
 }
 
 func (rc *RefinementChat) RequestContextModification(originalContext, userFeedback string) (string, error) {
@@ -93,14 +92,4 @@ YOU MUST FOLLOW THESE RULES:
 ..."`, originalContext, userFeedback)
 
 	return rc.Chat(modificationPrompt)
-}
-
-func (rc *RefinementChat) CleanRefinedContext(context string) string {
-	cleanContext := strings.TrimSpace(context)
-	if strings.HasPrefix(strings.ToLower(cleanContext), "context refinement complete") {
-		if idx := strings.Index(strings.ToLower(cleanContext), "here's what i've learned:"); idx != -1 {
-			cleanContext = strings.TrimSpace(cleanContext[idx+len("here's what i've learned:"):])
-		}
-	}
-	return cleanContext
 }

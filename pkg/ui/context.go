@@ -190,23 +190,9 @@ func (cp *ContextPresenter) PresentRefinedContext(refinedContext string) string 
 
 	sb.WriteString(cp.theme.Styles.Title.Render("\n✨ Refined Context ✨"))
 	sb.WriteString("\n" + cp.theme.Styles.ChatBorder.Render(strings.Repeat("─", 40)))
-
-	cleanContext := strings.TrimSpace(refinedContext)
-	if strings.HasPrefix(strings.ToLower(cleanContext), "context refinement complete") {
-		if idx := strings.Index(strings.ToLower(cleanContext), "here's the comprehensive breakdown:"); idx != -1 {
-			cleanContext = strings.TrimSpace(cleanContext[idx+len("here's the comprehensive breakdown:"):])
-		}
-	}
-
-	sb.WriteString("\n\n" + cp.theme.Styles.RefinedContext.Render(cleanContext))
-
-	reviewPrompt := `
-Please review the refined context above:
-• Is it accurate and complete?
-• Does it capture all key points?
-• Are there any missing details?`
-
-	sb.WriteString("\n" + cp.theme.Styles.InfoText.Render(reviewPrompt) + "\n")
+	sb.WriteString("\n" + refinedContext)
+	sb.WriteString("\n" + cp.theme.Styles.ChatBorder.Render(strings.Repeat("─", 40)))
+	sb.WriteString("\n\nPlease review the refined context above:\n• Is it accurate and complete?\n• Does it capture all key points?\n• Are there any missing details?")
 
 	return sb.String()
 }
