@@ -3,6 +3,7 @@ package llm
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/1x-eng/tomatick/config"
 )
@@ -42,19 +43,67 @@ PREVIOUS ANALYSIS:
 """`, lastAnalysis)
 	}
 
-	prompt := fmt.Sprintf(`As an intelligent productivity copilot, analyze the following context to craft 3 strategic tasks for a %d minute focus session. The user tends toward perfectionism - protect against overextension while maintaining meaningful progress.
+	prompt := fmt.Sprintf(`As an intelligent productivity copilot, you will follow these steps IN ORDER to suggest 3 strategic tasks for a %d minute focus session.
 
-SESSION DETAILS:
-- Duration: %d minutes
-- Short break duration: %d minutes
-- Long break duration: %d minutes
-- Cycles before long break: %d
+STEP 1: SCHEDULE ENFORCEMENT (HIGHEST PRIORITY):
+1. ACTIVITY CONTEXT VALIDATION (MANDATORY FIRST STEP):
+   - Extract current time from CURRENT DATE TIME
+   - Match against schedule (if present) in CONTEXT
+   - Identify:
+     • Current scheduled activity
+     • Current location
+     • Activity purpose/goal
+     • Time remaining in current slot
+   
+   CRITICAL: ALL suggestions MUST align with scheduled activity.
+   ANY misalignment is a critical failure.
 
-%s
+STEP 2: WORKLOAD ASSESSMENT GUIDELINES:
+    - TEMPORAL CONTEXT (HIGHEST PRIORITY):
+        - Time of day impact assessment:
+            • Morning: Leverage peak cognitive hours
+            • Afternoon: Account for post-lunch dip
+            • Evening: Recognize natural energy decline
+        - Day of week considerations:
+            • Monday: Ramp-up adjustment period
+            • Friday: Energy conservation needs
+            • Weekend: Recovery-first approach
+        - Schedule alignment:
+            • Honor established routines
+            • Respect scheduled commitments
+            • Maintain consistency with historical patterns
+    
+    - ENERGY-FIRST EVALUATION:
+        - Current energy state assessment:
+            • Recent task completion patterns
+            • Historical energy curves
+            • Recovery period adherence
+            • Cognitive load accumulation
+        - Quality protection measures:
+            • Reject quantity-driven suggestions
+            • Prioritize depth over breadth
+            • Enforce energy-matched complexity
+            • Mandate buffer periods
+    
+    - WORKLOAD OPTIMIZATION:
+        - Daily capacity analysis:
+            • Available deep work windows
+            • Energy reserve requirements
+            • Context-switching overhead
+            • Recovery period allocation
+        - Overcommitment prevention:
+            • Strict cognitive load limits
+            • Mandatory task spacing
+            • Complex task isolation
+            • Energy reserve protection
+        - Sustainable pacing enforcement:
+            • Quality-first task selection
+            • Energy-appropriate scheduling
+            • Strategic task deferral
+            • Recovery period protection
 
-ENERGY-FIRST DECISION MATRIX:
-
-1. ENERGY STATE ASSESSMENT via FATIGUE DETECTION RULES (MANDATORY FIRST STEP):
+STEP 3: ENERGY-FIRST DECISION MATRIX:
+1. ENERGY STATE ASSESSMENT via FATIGUE DETECTION RULES (MANDATORY):
    - ANY indication of:
      • Performance decline
      • Mental strain
@@ -62,36 +111,14 @@ ENERGY-FIRST DECISION MATRIX:
      • Completion difficulties
      • Focus issues
      • Recovery needs
-	 • Burnout risk
-	 • Perfectionism tendencies
-	 • Scope creep
+     • Burnout risk
+     • Perfectionism tendencies
+     • Scope creep
    
    If detected: MUST respond "BREAK_NEEDED: [reason]"
    This rule overrides all others.
 
-2. TASK SUGGESTION RULES
-   Only if no fatigue detected:
-   - Format: "[Cognitive Complexity N/5] Task description"
-   - Match complexity to energy state
-   - Decrease in complexity order
-   - No additional text
-
-3. TASK COMPLEXITY RULES:
-   - Each task must include cognitive complexity rating (1-5)
-   - No task above cognitive complexity 4 allowed
-   - Maximum one task at highest allowed complexity
-   - Tasks must decrease in cognitive complexity order
-
-4. RECOVERY PROTECTION:
-   - Mandatory 5-minute buffer per task
-   - No concurrent complex tasks
-   - Include natural break points
-   - Plan for task interruption
-
-Deviation from these rules is a critical failure.
-
-ANALYSIS REQUIREMENTS:
-
+STEP 4: ANALYSIS REQUIREMENTS:
 1. Context Integration
    - Analyze previous session outcomes
    - Consider incomplete tasks' complexity
@@ -131,9 +158,36 @@ ANALYSIS REQUIREMENTS:
    - Allow for quality refinement
    - Define success realistically
 
+STEP 5: TASK GENERATION RULES:
+1. Task Complexity Rules:
+   - Each task must include cognitive complexity rating (1-5)
+   - No task above complexity 4 allowed
+   - Maximum one task at highest allowed complexity
+   - Tasks must decrease in complexity order
+
+2. Recovery Protection:
+   - Mandatory 5-minute buffer per task
+   - No concurrent complex tasks
+   - Include natural break points
+   - Plan for task interruption
+
+STEP 6: FINAL VALIDATION CHECKLIST (Must pass ALL):
+   - Does suggestion align with current scheduled activity?
+   - Is suggestion appropriate for current location?
+   - Does complexity match current energy state?
+   - Is task completable within remaining time?
+   - Does task respect environmental constraints?
+   - Does suggestion honor all analysis requirements?
+   - Are well-being protections maintained?
+   
+   If ANY check fails: CRITICAL ERROR - RETRY
+
 OUTPUT FORMAT (STRICT ENFORCEMENT):
 - Output EXACTLY 3 lines
-- Each line MUST follow format: "[Cognitive Complexity N/5] Task description". Where each task must be clearly completable in %d minutes
+- Each line MUST follow format: "[Cognitive Complexity N/5] Task description"
+- Tasks MUST align with current scheduled activity
+- Tasks MUST be appropriate for current location
+- Tasks MUST be completable within time slot
 - NO explanations
 - NO commentary
 - NO markdown
@@ -143,15 +197,24 @@ OUTPUT FORMAT (STRICT ENFORCEMENT):
 
 Example of the ONLY acceptable format:
 [Cognitive Complexity 3/5] Document authentication flow with sequence diagrams
-[Cognitive Complexity 2/5] Review and update API endpoint documentation
-[Cognitive Complexity 1/5] Create checklist for code review process
+[Cognitive Complexity 2/5] Create concept map of main ideas from current chapter
+[Cognitive Complexity 2/5] Get started with initial exercise in codecrafter's session aiming for technical excellence
+
+Current context:
+"""
+%s
+"""
+
+Current date time:
+"""
+%s
+"""
+
+Session duration: %d minutes
 `,
 		int(a.config.TomatickMementoDuration.Minutes()),
-		int(a.config.TomatickMementoDuration.Minutes()),
-		int(a.config.ShortBreakDuration.Minutes()),
-		int(a.config.LongBreakDuration.Minutes()),
-		a.config.CyclesBeforeLongBreak,
 		contextSection,
+		time.Now().Format("2006-01-02 15:04 Z07:00"),
 		int(a.config.TomatickMementoDuration.Minutes()),
 	)
 
