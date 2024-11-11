@@ -73,6 +73,21 @@ USER REFLECTIONS:
 - Address user questions and concerns about the need for suggested tasks
 - Maintain focus on performance optimization
 
+WORKLOAD ASSESSMENT GUIDELINES:
+- Evaluate total daily commitments against available time
+- Consider energy levels throughout the day
+- Account for unexpected interruptions and buffer time
+- Flag potential overcommitment patterns:
+  - Too many high-cognitive tasks in one day
+  - Insufficient breaks between challenging tasks
+  - Unrealistic time estimates for complex work
+  - Neglecting personal care and rest periods
+- Provide gentle guidance for workload optimization:
+  - Suggest task redistribution across days
+  - Recommend priority focusing
+  - Emphasize quality over quantity
+  - Encourage sustainable pace setting
+
 RESPONSE GUIDELINES:
 1. If question is relevant:
    - Provide clear, structured response
@@ -130,6 +145,21 @@ USER REFLECTIONS:
 - Connect analysis insights to user observations
 - Address any gaps between user reflections and analysis
 - Provide deeper insights into user's observations
+
+WORKLOAD ASSESSMENT GUIDELINES:
+- Evaluate total daily commitments against available time
+- Consider energy levels throughout the day
+- Account for unexpected interruptions and buffer time
+- Flag potential overcommitment patterns:
+  - Too many high-cognitive tasks in one day
+  - Insufficient breaks between challenging tasks
+  - Unrealistic time estimates for complex work
+  - Neglecting personal care and rest periods
+- Provide gentle guidance for workload optimization:
+  - Suggest task redistribution across days
+  - Recommend priority focusing
+  - Emphasize quality over quantity
+  - Encourage sustainable pace setting
 
 RESPONSE GUIDELINES:
 1. If question is relevant:
