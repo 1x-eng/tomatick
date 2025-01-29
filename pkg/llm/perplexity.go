@@ -44,7 +44,7 @@ func (p *PerplexityAI) GetResponse(messages []Message) (string, error) {
 	url := "https://api.perplexity.ai/chat/completions"
 
 	reqBody := PerplexityRequest{
-		Model:    "llama-3.1-sonar-huge-128k-online",
+		Model:    "sonar-reasoning",
 		Messages: messages,
 	}
 
