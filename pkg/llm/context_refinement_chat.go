@@ -50,46 +50,115 @@ func (rc *RefinementChat) Chat(userInput string) (string, error) {
 }
 
 func (rc *RefinementChat) GetRefinedContext() (string, error) {
-	finalPrompt := `Based on our discussion, provide the complete fine-tuned, exhaustive and refined context. Format your response exactly as:
-"Context refinement complete. Here's what I've learned:
-• [point 1]
-• [point 2]
-• [point 3]
-..."
+	systemPrompt := `You are an expert at creating focused, goal-oriented session blueprints for Tomatick, a next-generation productivity system. Your task is to take user context and transform it into a clear, actionable plan with specific objectives and time-bound outcomes.
 
-Include ANY and ALL key details while maintaining temporal references where applicable. DO NOT OVERSIMPLIFY OR OVERSUMMARIZE. AIM TO BE AS DETAILED AS POSSIBLE.`
+CORE RESPONSIBILITIES:
+1. Analyze and restructure user context into clear, actionable plans
+2. Ensure work-life balance by setting realistic goals and timeframes
+3. Create time-bound roadmaps with specific milestones
+4. Identify potential blockers and provide mitigation strategies
+5. Help users maintain sustainable work patterns
 
-	response, err := rc.Chat(finalPrompt)
+CONTEXT ANALYSIS GUIDELINES:
+• Consider work-life balance implications
+• Account for personal wellbeing and family time
+• Set realistic expectations and timeframes
+• Identify signs of overwork or unsustainable patterns
+• Suggest breaks and boundaries where needed
+
+OUTPUT REQUIREMENTS:
+Your response must follow this EXACT format:
+
+CORE OBJECTIVE:
+[One clear, measurable end goal that this session aims to achieve]
+
+CONTEXT ESSENCE:
+[3-5 bullet points distilling the key information and priorities]
+
+TIME-BOUND ROADMAP:
+[Break down by specific time blocks, e.g.:
+2:00 PM - 2:40 PM:
+• Task 1 (25 min)
+• Task 2 (15 min)
+...]
+
+SUCCESS CRITERIA:
+[2-3 specific, measurable outcomes that define success]
+
+FOCUS AREAS:
+[Key areas requiring attention, in priority order]
+
+WORK-LIFE BALANCE CONSIDERATIONS:
+[Specific recommendations for maintaining balance]
+
+POTENTIAL BLOCKERS:
+[Identify challenges and mitigation strategies]
+
+Remember:
+1. Every point must directly contribute to the core objective
+2. Be specific and actionable
+3. Include clear time estimates
+4. Focus on measurable outcomes
+5. Keep it concise but comprehensive
+6. Emphasize sustainable work patterns
+7. Consider work-life balance in all recommendations`
+
+	// Reset history to just have the system prompt and original context
+	rc.history = []Message{
+		{
+			Role:    "system",
+			Content: systemPrompt,
+		},
+		rc.history[len(rc.history)-1], // Keep the last message which contains the context
+	}
+
+	response, err := rc.perplexity.GetResponse(rc.history)
 	if err != nil {
 		return "", err
 	}
+
+	// Update history with the response
+	rc.history = append(rc.history, Message{
+		Role:    "assistant",
+		Content: response,
+	})
 
 	return response, nil
 }
 
 func (rc *RefinementChat) RequestContextModification(originalContext, userFeedback string) (string, error) {
-	modificationPrompt := fmt.Sprintf(`Previous context:
+	// Create modification request
+	modificationRequest := fmt.Sprintf(`Previous blueprint:
 %s
 
 User feedback for modifications:
 %s
 
-Based on this feedback, provide a refined and fine-tuned version of the context. 
+Please provide an updated blueprint that incorporates this feedback. Maintain the same structured format with all sections (CORE OBJECTIVE, CONTEXT ESSENCE, etc.) while addressing the feedback.`, originalContext, userFeedback)
 
-YOU MUST FOLLOW THESE RULES:
-1. Carefully analyze both the original context and user feedback & incorporate all user requested changes
-2. Preserve all critical details from the original context
-3. Maintain chronological accuracy and temporal relationships
-4. Retain all specific requirements, constraints, and conditions
-5. Resolve any contradictions between original context and new modifications
-6. Add clarifications where ambiguity exists
-7. Validate that no important information is lost during refinement
-8. Maintain logical flow and coherence
-9. Format the response exactly as:
-"Context refinement complete. Here's what I've learned:
-• [point 1]
-• [point 2]
-..."`, originalContext, userFeedback)
+	// Set up a fresh conversation with proper role alternation
+	rc.history = []Message{
+		{
+			Role:    "system",
+			Content: rc.history[0].Content, // Keep the system prompt
+		},
+		{
+			Role:    "user",
+			Content: modificationRequest,
+		},
+	}
 
-	return rc.Chat(modificationPrompt)
+	// Get the response
+	response, err := rc.perplexity.GetResponse(rc.history)
+	if err != nil {
+		return "", err
+	}
+
+	// Add the assistant's response to history
+	rc.history = append(rc.history, Message{
+		Role:    "assistant",
+		Content: response,
+	})
+
+	return response, nil
 }

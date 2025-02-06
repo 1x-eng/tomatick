@@ -233,57 +233,19 @@ func (cm *ContextManager) RefineContext(context string, llmClient *llm.Perplexit
 		return context, nil
 	}
 
-	// Show thinking spinner while initializing refinement
-	spinner := ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
-		Foreground(lipgloss.Color("#818CF8")).
-		Bold(true))
-	done := make(chan bool)
+	// Initialize refinement chat
+	chat := llm.NewRefinementChat(llmClient, []llm.Message{
+		{
+			Role:    "user",
+			Content: fmt.Sprintf("Current time: %s\nContext to refine:\n%s", time.Now().Format("15:04"), context),
+		},
+	})
 
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			default:
-				fmt.Printf("\r%s Initializing context refinement...", spinner.Next())
-				time.Sleep(100 * time.Millisecond)
-			}
-		}
-	}()
+	var refinedContext string
+	var err error
+	isAccepted := false
 
-	refiner := llm.NewContextRefiner(llmClient, context)
-	chat, err := refiner.StartRefinement()
-	done <- true
-	fmt.Print("\r\033[K") // Clear the spinner line
-
-	if err != nil {
-		fmt.Println(cm.au.Red("\nError starting context refinement. Proceeding with original context along with any additional context you provided."))
-		return context, nil
-	}
-
-	refinedContext, err := cm.handleRefinementChat(chat, context)
-	if err != nil {
-		fmt.Println(cm.au.Red("\nError during context refinement. Proceeding with original context along with any additional context you provided."))
-		return context, nil
-	}
-
-	return refinedContext, nil
-}
-
-func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, originalContext string) (string, error) {
-	fmt.Print(cm.presenter.PresentRefinementStart())
-
-	scanner := bufio.NewScanner(os.Stdin)
-	refinementComplete := false
-	var lastResponse string
-	var finalRefinedContext string
-
-	for !refinementComplete {
-		// Show thinking indicator with new style
-		fmt.Printf("\n%s %s\n",
-			cm.au.BrightCyan("💭"),
-			cm.presenter.GetTheme().Styles.ThinkingText.Render("Analyzing your context..."))
-
+	for !isAccepted {
 		// Show thinking spinner
 		spinner := ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
 			Foreground(lipgloss.Color("#818CF8")).
@@ -296,146 +258,127 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 				case <-done:
 					return
 				default:
-					fmt.Printf("\r%s Analyzing context...", spinner.Next())
+					fmt.Printf("\r%s Creating your session blueprint...", spinner.Next())
 					time.Sleep(100 * time.Millisecond)
 				}
 			}
 		}()
 
-		// If this is the first iteration, send empty string to get initial question
-		// Otherwise, send the last user input
-		response, err := chat.Chat(lastResponse)
-		done <- true
-		fmt.Print("\r\033[K")
+		// Get refined context
+		refinedContext, err = chat.GetRefinedContext()
+		close(done)
+		fmt.Println() // Clear spinner line
 
 		if err != nil {
-			return originalContext, fmt.Errorf("chat error: %w", err)
+			fmt.Printf("\n%s Error during context refinement: %v\n", cm.au.Red("✗"), err)
+			fmt.Println(cm.au.Yellow("Would you like to:"))
+			var choice string
+			prompt := &survey.Select{
+				Message: "Choose an option:",
+				Options: []string{
+					"Try again",
+					"Proceed with original context",
+					"Exit",
+				},
+			}
+			survey.AskOne(prompt, &choice)
+
+			switch choice {
+			case "Try again":
+				continue
+			case "Proceed with original context":
+				return context, nil
+			default:
+				return context, fmt.Errorf("context refinement cancelled by user")
+			}
 		}
 
-		// Check if refinement is complete
-		if strings.Contains(strings.ToLower(response), "context refinement complete") {
-			refinementComplete = true
-			cleanResponse := response
-			if idx := strings.Index(strings.ToLower(response), "here's what i've learned:"); idx != -1 {
-				cleanResponse = response[idx+len("here's what i've learned:"):]
-			}
-			finalRefinedContext = cleanResponse
-			fmt.Printf("\n%s %s\n",
-				cm.au.BrightCyan("🤖"),
-				cm.presenter.GetTheme().Styles.AIMessage.Render(cleanResponse))
+		// Present the refined context
+		fmt.Println("\n" + cm.au.BrightCyan("Proposed Session Blueprint:").Bold().String())
+		fmt.Println(refinedContext)
+
+		// Ask for acceptance
+		var accepted bool
+		acceptPrompt := &survey.Confirm{
+			Message: cm.au.BrightBlue("Does this blueprint accurately capture your session goals and plan?").String(),
+		}
+		survey.AskOne(acceptPrompt, &accepted)
+
+		if accepted {
+			isAccepted = true
 			break
 		}
 
-		// Format AI's response with new style
-		fmt.Printf("\n%s %s\n",
-			cm.au.BrightCyan("🤖"),
-			cm.presenter.GetTheme().Styles.AIMessage.Render(response))
-
-		// Format user input prompt with new style
-		fmt.Printf("\n%s %s\n",
-			cm.au.BrightBlue("ℹ️"),
-			cm.presenter.GetTheme().Styles.SystemInstruction.Render("Your response:"))
-		fmt.Printf("%s ", cm.au.BrightBlue("👤").String())
-
+		// If not accepted, get feedback
+		fmt.Print(cm.au.BrightBlue("\nWhat would you like to improve? Please provide your feedback:\n").String())
 		var lines []string
+		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if line == "done" || line == "exit" {
+			if line == "done" {
 				break
 			}
 			lines = append(lines, line)
 		}
 
-		input := strings.TrimSpace(strings.Join(lines, "\n"))
-		if input == "exit" {
-			return originalContext, nil
-		}
+		feedback := strings.Join(lines, "\n")
 
-		if input == "" {
-			continue
-		}
+		// Show thinking spinner
+		spinner = ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
+			Foreground(lipgloss.Color("#818CF8")).
+			Bold(true))
+		done = make(chan bool)
 
-		lastResponse = input
-	}
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					fmt.Printf("\r%s Incorporating your feedback...", spinner.Next())
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+		}()
 
-	// Get and present the refined context
-	spinner := ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
-		Foreground(lipgloss.Color("#818CF8")).
-		Bold(true))
-	done := make(chan bool)
+		// Update chat with feedback for next iteration
+		refinedContext, err = chat.RequestContextModification(refinedContext, feedback)
+		close(done)
+		fmt.Println() // Clear spinner line
 
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
+		if err != nil {
+			fmt.Printf("\n%s Error incorporating feedback: %v\n", cm.au.Red("✗"), err)
+			fmt.Println(cm.au.Yellow("Would you like to:"))
+			var choice string
+			prompt := &survey.Select{
+				Message: "Choose an option:",
+				Options: []string{
+					"Try again",
+					"Keep previous version",
+					"Proceed with original context",
+					"Exit",
+				},
+			}
+			survey.AskOne(prompt, &choice)
+
+			switch choice {
+			case "Try again":
+				continue
+			case "Keep previous version":
+				isAccepted = true
+				break
+			case "Proceed with original context":
+				return context, nil
 			default:
-				fmt.Printf("\r%s Finalizing refined context...", spinner.Next())
-				time.Sleep(100 * time.Millisecond)
+				return context, fmt.Errorf("context refinement cancelled by user")
 			}
-		}
-	}()
-	done <- true
-	fmt.Print("\r\033[K")
-
-	// Present the refined context for approval
-	fmt.Print(cm.presenter.PresentRefinedContext(finalRefinedContext))
-
-	var approved bool
-	for !approved {
-		approvalPrompt := &survey.Confirm{
-			Message: "Do you approve this refined context?",
-		}
-		survey.AskOne(approvalPrompt, &approved)
-
-		if !approved {
-			fmt.Print(cm.au.BrightBlue("What changes would you like to make? Type your changes and enter 'done' when finished:\n").String())
-
-			var lines []string
-			for scanner.Scan() {
-				line := scanner.Text()
-				if line == "done" {
-					break
-				}
-				lines = append(lines, line)
-			}
-
-			userFeedback := strings.Join(lines, "\n")
-
-			// Show thinking spinner
-			spinner := ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
-				Foreground(lipgloss.Color("#818CF8")).
-				Bold(true))
-			done := make(chan bool)
-
-			go func() {
-				for {
-					select {
-					case <-done:
-						return
-					default:
-						fmt.Printf("\r%s Incorporating feedback...", spinner.Next())
-						time.Sleep(100 * time.Millisecond)
-					}
-				}
-			}()
-
-			refinedContext, err := chat.RequestContextModification(originalContext, userFeedback)
-			done <- true
-			fmt.Print("\r\033[K")
-
-			if err != nil {
-				return originalContext, fmt.Errorf("modification error: %w", err)
-			}
-
-			fmt.Print(cm.presenter.PresentRefinedContext(refinedContext))
 		}
 	}
 
 	// Ask about persisting the refined context
 	var persistRefinedContext bool
 	persistPrompt := &survey.Confirm{
-		Message: "Would you like to save this refined context permanently? By chosing 'yes', understand that, the original context of the chosen file will be overwritten. Choose 'no' to use it only for this session.",
+		Message: "Would you like to save this refined context permanently? By choosing 'yes', understand that, the original context of the chosen file will be overwritten. Choose 'no' to use it only for this session.",
 	}
 	survey.AskOne(persistPrompt, &persistRefinedContext)
 
@@ -448,14 +391,15 @@ func (cm *ContextManager) handleRefinementChat(chat *llm.RefinementChat, origina
 			filename = "copilot_refined_context_" + time.Now().Format("2006-01-02_15-04-05") + ".txt"
 		}
 
-		if err := os.WriteFile(filepath.Join(cm.contextDir, filename), []byte(finalRefinedContext), 0644); err != nil {
-			return originalContext, fmt.Errorf("failed to save refined context: %w", err)
+		if err := os.WriteFile(filepath.Join(cm.contextDir, filename), []byte(refinedContext), 0644); err != nil {
+			fmt.Println(cm.au.Red("Failed to save context:"), err)
+			// Continue with session even if save fails
+		} else {
+			fmt.Printf("\n%s Context saved to: %s\n",
+				cm.presenter.GetTheme().Emoji.Success,
+				cm.presenter.GetTheme().Styles.InfoText.Render(filename))
 		}
-
-		fmt.Printf("\n%s Context saved to: %s\n",
-			cm.presenter.GetTheme().Emoji.Success,
-			cm.presenter.GetTheme().Styles.InfoText.Render(filename))
 	}
 
-	return finalRefinedContext, nil
+	return refinedContext, nil
 }
