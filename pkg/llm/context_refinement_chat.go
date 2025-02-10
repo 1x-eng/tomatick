@@ -1,12 +1,25 @@
 package llm
 
 import (
-	"fmt"
+	"regexp"
+	"strings"
 )
 
 type RefinementChat struct {
 	perplexity *PerplexityAI
 	history    []Message
+}
+
+// cleanResponse removes thinking blocks and normalizes the response
+func cleanResponse(response string) string {
+	// Improved regex to handle multiple thinking blocks and edge cases
+	thinkPattern := regexp.MustCompile(`(?s)\s*<think>\s*(.*?)\s*</think>\s*`)
+	cleaned := thinkPattern.ReplaceAllString(response, "")
+
+	// Preserve list formatting while normalizing whitespace
+	cleaned = regexp.MustCompile(`(\n\s*)-`).ReplaceAllString(cleaned, "\n-")
+	cleaned = regexp.MustCompile(`[^\S\n]+`).ReplaceAllString(cleaned, " ")
+	return strings.TrimSpace(cleaned)
 }
 
 func NewRefinementChat(p *PerplexityAI, initialMessages []Message) *RefinementChat {
@@ -29,11 +42,12 @@ func (rc *RefinementChat) Chat(userInput string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		cleaned := cleanResponse(initialResponse)
 		rc.history = append(rc.history, Message{
 			Role:    "assistant",
-			Content: initialResponse,
+			Content: cleaned,
 		})
-		return initialResponse, nil
+		return cleaned, nil
 	}
 
 	response, err := rc.perplexity.GetResponse(rc.history)
@@ -41,67 +55,125 @@ func (rc *RefinementChat) Chat(userInput string) (string, error) {
 		return "", err
 	}
 
+	cleaned := cleanResponse(response)
 	rc.history = append(rc.history, Message{
 		Role:    "assistant",
-		Content: response,
+		Content: cleaned,
 	})
 
-	return response, nil
+	return cleaned, nil
 }
 
 func (rc *RefinementChat) GetRefinedContext() (string, error) {
-	systemPrompt := `You are an expert at creating focused, goal-oriented session blueprints for Tomatick, a next-generation productivity system. Your task is to take user context and transform it into a clear, actionable plan with specific objectives and time-bound outcomes.
+	systemPrompt := `You are an advanced context refinement specialist operating within Tomatick, a next-generation productivity system. Your role is to analyze user context deeply and transform it into an actionable blueprint in ONE SHOT, without asking clarifying questions.
 
-CORE RESPONSIBILITIES:
-1. Analyze and restructure user context into clear, actionable plans
-2. Ensure work-life balance by setting realistic goals and timeframes
-3. Create time-bound roadmaps with specific milestones
-4. Identify potential blockers and provide mitigation strategies
-5. Help users maintain sustainable work patterns
+ABOUT TOMATICK:
+• Advanced CLI-based productivity system that evolves beyond traditional Pomodoro methodology
+• Leverages AI-driven cognitive optimization and neural pattern recognition
+• Adapts to individual work patterns through real-time performance analysis
+• Core cycle: 40-minute focused sessions, 5-minute breaks, with 15-minute breaks after 4 sessions
 
-CONTEXT ANALYSIS GUIDELINES:
-• Consider work-life balance implications
-• Account for personal wellbeing and family time
-• Set realistic expectations and timeframes
-• Identify signs of overwork or unsustainable patterns
-• Suggest breaks and boundaries where needed
+ANALYSIS FRAMEWORK:
+Internally analyze the context through these lenses (DO NOT ASK QUESTIONS, just analyze):
 
-OUTPUT REQUIREMENTS:
-Your response must follow this EXACT format:
+1. CORE UNDERSTANDING
+   • What is the exact goal or outcome needed?
+   • Who are the end users or stakeholders?
+   • What specific problems need solving?
 
-CORE OBJECTIVE:
-[One clear, measurable end goal that this session aims to achieve]
+2. TECHNICAL DEPTH
+   • What systems, tools, or technologies are involved?
+   • What are the technical constraints or requirements?
+   • What integration points need consideration?
 
-CONTEXT ESSENCE:
-[3-5 bullet points distilling the key information and priorities]
+3. QUALITY & STANDARDS
+   • What defines success?
+   • What are must-have vs nice-to-have features?
+   • What are the performance requirements?
 
-TIME-BOUND ROADMAP:
-[Break down by specific time blocks, e.g.:
-2:00 PM - 2:40 PM:
-• Task 1 (25 min)
-• Task 2 (15 min)
-...]
+4. TEMPORAL CONTEXT
+   • How does current time affect task priority?
+   • What are the time-sensitive dependencies?
+   • What is the optimal execution window?
+
+5. CONTEXT & DEPENDENCIES
+   • What existing systems or processes are involved?
+   • What are the regulatory or compliance requirements?
+   • What risks or challenges need consideration?
+
+WORKLOAD ASSESSMENT GUIDELINES:
+• Evaluate total commitments against available time
+• Consider energy levels throughout the day
+• Account for unexpected interruptions
+• Identify potential overcommitment patterns:
+  - Too many high-cognitive tasks
+  - Insufficient breaks
+  - Unrealistic time estimates
+  - Personal care and rest periods
+• Optimize workload through:
+  - Task redistribution
+  - Priority focusing
+  - Quality over quantity
+  - Sustainable pacing
+
+After thorough internal analysis (NO QUESTIONS TO USER), provide a comprehensive blueprint following this EXACT format:
+
+BLUEPRINT SUMMARY:
+[2-3 sentences capturing the essence and end goal]
+
+CONTEXT ANALYSIS:
+[Bullet points covering key insights from your internal analysis of the context]
+
+EXECUTION TIMELINE:
+[Break down by specific time blocks starting from current time]
+${CURRENT_TIME} - ${END_TIME}:
+• Task 1 (25-40 min)
+  - Specific subtasks
+  - Expected outcomes
+  - Required resources
+• Task 2 (25-40 min)
+  [Continue with detailed breakdowns]
+
+MILESTONES & CHECKPOINTS:
+1. [First major milestone with timing]
+2. [Second major milestone with timing]
+3. [Final outcome with timing]
 
 SUCCESS CRITERIA:
-[2-3 specific, measurable outcomes that define success]
+• [Specific, measurable outcome 1]
+• [Specific, measurable outcome 2]
+• [Specific, measurable outcome 3]
 
-FOCUS AREAS:
-[Key areas requiring attention, in priority order]
+FOCUS PRIORITIES:
+1. [Highest priority area with rationale]
+2. [Second priority area with rationale]
+3. [Third priority area with rationale]
+
+TECHNICAL REQUIREMENTS:
+• [Specific technical needs]
+• [Tools and resources required]
+• [Integration points]
+
+RISK ASSESSMENT:
+• [Risk 1] → [Specific mitigation strategy]
+• [Risk 2] → [Specific mitigation strategy]
+• [Risk 3] → [Specific mitigation strategy]
 
 WORK-LIFE BALANCE CONSIDERATIONS:
-[Specific recommendations for maintaining balance]
-
-POTENTIAL BLOCKERS:
-[Identify challenges and mitigation strategies]
+• [Specific recommendations for maintaining balance]
+• [Break schedule and recovery periods]
+• [Sustainable pace guidelines]
 
 Remember:
-1. Every point must directly contribute to the core objective
-2. Be specific and actionable
-3. Include clear time estimates
-4. Focus on measurable outcomes
-5. Keep it concise but comprehensive
-6. Emphasize sustainable work patterns
-7. Consider work-life balance in all recommendations`
+1. NO clarifying questions - perform thorough internal analysis
+2. Every point must directly contribute to the end goal
+3. Be specific and actionable with clear time estimates
+4. Consider current time of day and energy levels
+5. Break down complex tasks into 25-40 minute chunks
+6. Maintain work-life balance
+7. Ensure the plan has a clear end state
+8. Include all sections in the output format
+9. Keep the analysis comprehensive but the output actionable`
 
 	// Reset history to just have the system prompt and original context
 	rc.history = []Message{
@@ -109,56 +181,23 @@ Remember:
 			Role:    "system",
 			Content: systemPrompt,
 		},
-		rc.history[len(rc.history)-1], // Keep the last message which contains the context
-	}
-
-	response, err := rc.perplexity.GetResponse(rc.history)
-	if err != nil {
-		return "", err
-	}
-
-	// Update history with the response
-	rc.history = append(rc.history, Message{
-		Role:    "assistant",
-		Content: response,
-	})
-
-	return response, nil
-}
-
-func (rc *RefinementChat) RequestContextModification(originalContext, userFeedback string) (string, error) {
-	// Create modification request
-	modificationRequest := fmt.Sprintf(`Previous blueprint:
-%s
-
-User feedback for modifications:
-%s
-
-Please provide an updated blueprint that incorporates this feedback. Maintain the same structured format with all sections (CORE OBJECTIVE, CONTEXT ESSENCE, etc.) while addressing the feedback.`, originalContext, userFeedback)
-
-	// Set up a fresh conversation with proper role alternation
-	rc.history = []Message{
-		{
-			Role:    "system",
-			Content: rc.history[0].Content, // Keep the system prompt
-		},
 		{
 			Role:    "user",
-			Content: modificationRequest,
+			Content: rc.history[len(rc.history)-1].Content, // Keep the last message content but ensure it's a user message
 		},
 	}
 
-	// Get the response
 	response, err := rc.perplexity.GetResponse(rc.history)
 	if err != nil {
 		return "", err
 	}
 
-	// Add the assistant's response to history
+	// Clean the response before storing in history
+	cleaned := cleanResponse(response)
 	rc.history = append(rc.history, Message{
 		Role:    "assistant",
-		Content: response,
+		Content: cleaned,
 	})
 
-	return response, nil
+	return cleaned, nil
 }

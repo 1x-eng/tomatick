@@ -237,142 +237,40 @@ func (cm *ContextManager) RefineContext(context string, llmClient *llm.Perplexit
 	chat := llm.NewRefinementChat(llmClient, []llm.Message{
 		{
 			Role:    "user",
-			Content: fmt.Sprintf("Current time: %s\nContext to refine:\n%s", time.Now().Format("15:04"), context),
+			Content: fmt.Sprintf("\n\n\nCurrent time: %s\n\n========= Context to refine:============\n%s", time.Now().Format("15:04"), context),
 		},
 	})
 
 	var refinedContext string
 	var err error
-	isAccepted := false
 
-	for !isAccepted {
-		// Show thinking spinner
-		spinner := ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
-			Foreground(lipgloss.Color("#818CF8")).
-			Bold(true))
-		done := make(chan bool)
-
-		go func() {
-			for {
-				select {
-				case <-done:
-					return
-				default:
-					fmt.Printf("\r%s Creating your session blueprint...", spinner.Next())
-					time.Sleep(100 * time.Millisecond)
-				}
-			}
-		}()
-
-		// Get refined context
-		refinedContext, err = chat.GetRefinedContext()
-		close(done)
-		fmt.Println() // Clear spinner line
-
-		if err != nil {
-			fmt.Printf("\n%s Error during context refinement: %v\n", cm.au.Red("✗"), err)
-			fmt.Println(cm.au.Yellow("Would you like to:"))
-			var choice string
-			prompt := &survey.Select{
-				Message: "Choose an option:",
-				Options: []string{
-					"Try again",
-					"Proceed with original context",
-					"Exit",
-				},
-			}
-			survey.AskOne(prompt, &choice)
-
-			switch choice {
-			case "Try again":
-				continue
-			case "Proceed with original context":
-				return context, nil
+	var spinner = ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
+		Foreground(lipgloss.Color("#818CF8")).
+		Bold(true))
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
 			default:
-				return context, fmt.Errorf("context refinement cancelled by user")
+				fmt.Printf("\r%s Creating your session blueprint...", spinner.Next())
+				time.Sleep(100 * time.Millisecond)
 			}
 		}
+	}()
 
-		// Present the refined context
+	refinedContext, err = chat.GetRefinedContext()
+	close(done)
+	fmt.Println() // Clear spinner line
+
+	if err != nil {
+		fmt.Printf("\n%s Error during context refinement: %v\n", cm.au.Red("✗"), err)
+		fmt.Println(cm.au.Yellow("Proceeding with original context."))
+		refinedContext = context
+	} else {
 		fmt.Println("\n" + cm.au.BrightCyan("Proposed Session Blueprint:").Bold().String())
-		fmt.Println(refinedContext)
-
-		// Ask for acceptance
-		var accepted bool
-		acceptPrompt := &survey.Confirm{
-			Message: cm.au.BrightBlue("Does this blueprint accurately capture your session goals and plan?").String(),
-		}
-		survey.AskOne(acceptPrompt, &accepted)
-
-		if accepted {
-			isAccepted = true
-			break
-		}
-
-		// If not accepted, get feedback
-		fmt.Print(cm.au.BrightBlue("\nWhat would you like to improve? Please provide your feedback:\n").String())
-		var lines []string
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line == "done" {
-				break
-			}
-			lines = append(lines, line)
-		}
-
-		feedback := strings.Join(lines, "\n")
-
-		// Show thinking spinner
-		spinner = ui.NewSpinner(cm.presenter.GetTheme().Styles.Spinner.
-			Foreground(lipgloss.Color("#818CF8")).
-			Bold(true))
-		done = make(chan bool)
-
-		go func() {
-			for {
-				select {
-				case <-done:
-					return
-				default:
-					fmt.Printf("\r%s Incorporating your feedback...", spinner.Next())
-					time.Sleep(100 * time.Millisecond)
-				}
-			}
-		}()
-
-		// Update chat with feedback for next iteration
-		refinedContext, err = chat.RequestContextModification(refinedContext, feedback)
-		close(done)
-		fmt.Println() // Clear spinner line
-
-		if err != nil {
-			fmt.Printf("\n%s Error incorporating feedback: %v\n", cm.au.Red("✗"), err)
-			fmt.Println(cm.au.Yellow("Would you like to:"))
-			var choice string
-			prompt := &survey.Select{
-				Message: "Choose an option:",
-				Options: []string{
-					"Try again",
-					"Keep previous version",
-					"Proceed with original context",
-					"Exit",
-				},
-			}
-			survey.AskOne(prompt, &choice)
-
-			switch choice {
-			case "Try again":
-				continue
-			case "Keep previous version":
-				isAccepted = true
-				break
-			case "Proceed with original context":
-				return context, nil
-			default:
-				return context, fmt.Errorf("context refinement cancelled by user")
-			}
-		}
+		fmt.Println(refinedContext + "\n\n")
 	}
 
 	// Ask about persisting the refined context
