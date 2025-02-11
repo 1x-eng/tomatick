@@ -223,10 +223,13 @@ User's Original Reflections:
 		return "", err
 	}
 
+	// Clean the response before storing and returning
+	cleanedResponse := cleanResponse(response)
+
 	sc.history = append(sc.history, Message{
 		Role:    "assistant",
-		Content: response,
+		Content: cleanedResponse,
 	})
 
-	return response, nil
+	return cleanedResponse, nil
 }

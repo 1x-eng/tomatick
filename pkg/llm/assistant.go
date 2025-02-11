@@ -196,9 +196,9 @@ OUTPUT FORMAT (STRICT ENFORCEMENT):
 - ANY deviation is a critical failure
 
 Example of the ONLY acceptable format:
-[Cognitive Complexity 3/5] Document authentication flow with sequence diagrams
-[Cognitive Complexity 2/5] Create concept map of main ideas from current chapter
-[Cognitive Complexity 2/5] Get started with initial exercise in codecrafter's session aiming for technical excellence
+[Cognitive Complexity 5/5] Document authentication flow with sequence diagrams
+[Cognitive Complexity 4/5] Create concept map of main ideas from current chapter
+[Cognitive Complexity 1/5] Get started with initial exercise in codecrafter's session aiming for technical excellence
 
 Current context:
 """
@@ -259,7 +259,8 @@ Deviation from these rules is a critical failure.`},
 		return nil, err
 	}
 
-	response = strings.TrimSpace(response)
+	// Add response cleaning
+	response = cleanResponse(response)
 
 	if strings.HasPrefix(response, "BREAK_NEEDED:") {
 		return []string{response}, nil
@@ -278,6 +279,7 @@ Deviation from these rules is a critical failure.`},
 	}
 
 	if len(suggestions) != 3 {
+		fmt.Println("\n\n********* Suggested tasks, albeit not in the correct format: *********\n", response)
 		return nil, fmt.Errorf("invalid response format: expected 3 suggestions, got %d", len(suggestions))
 	}
 
@@ -436,7 +438,8 @@ Maintain comprehensive analysis while ensuring clarity and actionability in pres
 		return "", err
 	}
 
-	return response, nil
+	// Add response cleaning
+	return cleanResponse(response), nil
 }
 
 func (a *Assistant) StartSuggestionChat(suggestions []string, lastAnalysis string) *SuggestionChat {
