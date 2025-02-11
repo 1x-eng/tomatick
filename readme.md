@@ -181,8 +181,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Break Monitoring System
 
-The latest addition to Tomatick is an intelligent break monitoring system that helps maintain healthy work patterns:
-
 ### Smart Break Detection
 - Real-time activity monitoring during breaks
 - Intelligent violation detection:
