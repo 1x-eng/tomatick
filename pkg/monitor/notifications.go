@@ -26,68 +26,23 @@ var NotificationStyle = lipgloss.NewStyle().
 
 // displayNotification shows a clean, inline notification
 func displayNotification(message string) {
-	width := 70
-	divider := strings.Repeat("─", width)
+	border := strings.Repeat("═", 50)
 
-	// Helper function to center text
-	center := func(s string) string {
-		padding := (width - len(s)) / 2
-		return strings.Repeat(" ", padding) + s + strings.Repeat(" ", width-padding-len(s))
-	}
+	fmt.Printf("\n%s\n", border)
+	fmt.Printf("🔔  Break Time\n")
+	fmt.Printf("%s\n\n", strings.Repeat("─", 50))
 
-	// Helper function to pad text
-	padLine := func(s string) string {
-		return "  " + s + strings.Repeat(" ", width-len(s)-4) + "  "
-	}
-
-	// Format each line
-	var lines []string
-	for _, line := range strings.Split(message, "\n") {
-		if strings.TrimSpace(line) == "" {
-			lines = append(lines, "")
-			continue
-		}
-
-		// Word wrap long lines
-		words := strings.Fields(line)
-		currentLine := ""
-		for _, word := range words {
-			if len(currentLine)+len(word)+1 <= width-4 {
-				if currentLine == "" {
-					currentLine = word
-				} else {
-					currentLine += " " + word
-				}
-			} else {
-				if currentLine != "" {
-					lines = append(lines, padLine(currentLine))
-				}
-				currentLine = word
-			}
-		}
-		if currentLine != "" {
-			lines = append(lines, padLine(currentLine))
-		}
-	}
-
-	// Build the final output
-	var output strings.Builder
-	output.WriteString("\n")
-	output.WriteString(divider + "\n")
-	output.WriteString(center("🔔 Break Time") + "\n")
-	output.WriteString("\n")
-
+	// Split and print message with proper padding
+	lines := strings.Split(message, "\n")
 	for _, line := range lines {
-		if line == "" {
-			output.WriteString("\n")
+		if strings.TrimSpace(line) == "" {
+			fmt.Println()
 		} else {
-			output.WriteString(line + "\n")
+			fmt.Printf("  %s\n", strings.TrimSpace(line))
 		}
 	}
 
-	output.WriteString(divider + "\n\n")
-
-	fmt.Print(output.String())
+	fmt.Printf("%s\n\n", border)
 }
 
 // BreakViolation represents a collection of activity events during a break
