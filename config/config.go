@@ -14,6 +14,7 @@ type Config struct {
 	MEMAIAPIToken           string
 	ContextDir              string
 	PerplexityAPIToken      string
+	UserName                string
 }
 
 func LoadConfig() (*Config, error) {
@@ -58,6 +59,7 @@ func LoadConfig() (*Config, error) {
 		MEMAIAPIToken:           getEnvVar("MEM_AI_API_TOKEN"),
 		ContextDir:              contextDir,
 		PerplexityAPIToken:      getEnvVar("PERPLEXITY_API_TOKEN"),
+		UserName:                getEnvVar("USER_NAME"),
 	}, nil
 }
 

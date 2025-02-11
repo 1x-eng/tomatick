@@ -179,4 +179,60 @@ My goal is to make Tomatick model-agnostic, giving you the freedom to choose how
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Break Monitoring System
+
+The latest addition to Tomatick is an intelligent break monitoring system that helps maintain healthy work patterns:
+
+### Smart Break Detection
+- Real-time activity monitoring during breaks
+- Intelligent violation detection:
+  - 30-second continuous activity threshold
+  - Casual interactions ignored
+  - Work app detection
+- Privacy-focused, local-only monitoring
+
+### Intelligent Notifications
+- Context-aware break reminders
+- Clean, centered notifications with:
+  - Activity summaries
+  - Personalized advice
+  - Violation tracking
+  - Automatic cleanup
+- Burnout prevention through pattern recognition
+
+Example notification:
+```
+╭──────────────────────────────────────────────────────────────╮
+│                        🔔 Break Time                         │
+│                                                             │
+│ Active work in VS Code detected (2.5 minutes)               │
+│ Consider stepping away from your workstation to refresh.     │
+│                                                             │
+│ Break violation #2 today                                    │
+╰──────────────────────────────────────────────────────────────╯
+```
+
+### Break Violation Rules
+- Violations only triggered by:
+  1. Active work in work-related apps (30+ seconds)
+  2. Sustained activity in any app (30+ seconds)
+- Casual interactions ignored:
+  - Brief mouse movements
+  - Quick app switches
+  - Short keyboard usage
+
+### Performance Optimizations
+- Smart app name caching (500ms)
+- Notification throttling (60s)
+- Efficient event buffering
+- Memory-safe implementation
+
+### Privacy First
+- All monitoring is local
+- No keystroke logging
+- Break-time only monitoring
+- Transparent data handling
+
+For detailed documentation of the monitoring system, see [pkg/monitor/README.md](pkg/monitor/README.md).
+
 
