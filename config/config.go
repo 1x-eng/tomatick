@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -14,6 +16,13 @@ type Config struct {
 	MEMAIAPIToken           string
 	ContextDir              string
 	PerplexityAPIToken      string
+	UserName                string
+	WorkApps                []string
+	Features                Features
+}
+
+type Features struct {
+	BreakMonitoring bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -50,6 +59,14 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to create context directory: %w", err)
 	}
 
+	// Get work apps from environment
+	workApps := getWorkApps()
+
+	// Determine available features based on OS
+	features := Features{
+		BreakMonitoring: runtime.GOOS == "darwin", // Only enable on macOS
+	}
+
 	return &Config{
 		TomatickMementoDuration: pomoDuration,
 		ShortBreakDuration:      shortBreak,
@@ -58,7 +75,38 @@ func LoadConfig() (*Config, error) {
 		MEMAIAPIToken:           getEnvVar("MEM_AI_API_TOKEN"),
 		ContextDir:              contextDir,
 		PerplexityAPIToken:      getEnvVar("PERPLEXITY_API_TOKEN"),
+		UserName:                getEnvVar("USER_NAME"),
+		WorkApps:                workApps,
+		Features:                features,
 	}, nil
+}
+
+// getWorkApps gets the list of work apps from environment variable
+func getWorkApps() []string {
+	defaultApps := []string{
+		"Code",          // VS Code
+		"Cursor",        // Cursor Editor
+		"iTerm2",        // Terminal
+		"Insomnia",      // API Testing
+		"pgAdmin 4",     // PostgreSQL Admin
+		"pgAdmin",       // PostgreSQL Admin
+		"Chrome",        // Web Browser
+		"Google Chrome", // Web Browser
+		"Terminal",      // Built-in Terminal
+	}
+
+	workAppsEnv := getEnvVar("WORK_APPS")
+	if workAppsEnv == "" {
+		return defaultApps
+	}
+
+	// Split by comma and trim spaces
+	customApps := strings.Split(workAppsEnv, ",")
+	for i, app := range customApps {
+		customApps[i] = strings.TrimSpace(app)
+	}
+
+	return customApps
 }
 
 func parseDurationEnv(key, defaultValue string) (time.Duration, error) {

@@ -179,4 +179,104 @@ My goal is to make Tomatick model-agnostic, giving you the freedom to choose how
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Break Monitoring System
+
+### Smart Break Detection
+- Real-time activity monitoring during breaks
+- Intelligent violation detection:
+  - 30-second continuous activity threshold
+  - Casual interactions ignored
+  - Work app detection
+- Privacy-focused, local-only monitoring
+
+### Intelligent Notifications
+- Context-aware break reminders
+- Clean, centered notifications with:
+  - Activity summaries
+  - Personalized advice
+  - Violation tracking
+  - Automatic cleanup
+- Burnout prevention through pattern recognition
+
+Example notification:
+```
+╭──────────────────────────────────────────────────────────────╮
+│                        🔔 Break Time                         │
+│                                                             │
+│ Active work in VS Code detected (2.5 minutes)               │
+│ Consider stepping away from your workstation to refresh.     │
+│                                                             │
+│ Break violation #2 today                                    │
+╰──────────────────────────────────────────────────────────────╯
+```
+
+### Break Violation Rules
+- Violations only triggered by:
+  1. Active work in work-related apps (30+ seconds)
+  2. Sustained activity in any app (30+ seconds)
+- Casual interactions ignored:
+  - Brief mouse movements
+  - Quick app switches
+  - Short keyboard usage
+
+### Performance Optimizations
+- Smart app name caching (500ms)
+- Notification throttling (60s)
+- Efficient event buffering
+- Memory-safe implementation
+
+### Privacy First
+- All monitoring is local
+- No keystroke logging
+- Break-time only monitoring
+- Transparent data handling
+
+For detailed documentation of the monitoring system, see [pkg/monitor/README.md](pkg/monitor/README.md).
+
+### Configuration
+
+Key configuration options:
+
+```env
+# Core settings
+POMODORO_DURATION=25m
+SHORT_BREAK_DURATION=5m
+LONG_BREAK_DURATION=15m
+CYCLES_BEFORE_LONGBREAK=4
+
+# API tokens
+MEM_AI_API_TOKEN=your_mem_ai_api_token
+PERPLEXITY_API_TOKEN=your_perplexity_api_token
+
+# User settings
+USER_NAME=your_name
+
+# Break monitoring (macOS only)
+WORK_APPS=Code,Cursor,iTerm2,Chrome,Terminal  # Optional: Comma-separated list of work apps
+```
+
+#### Work Apps Configuration
+
+By default, Tomatick monitors these applications during breaks:
+- VS Code (`Code`)
+- Cursor Editor (`Cursor`)
+- iTerm2 (`iTerm2`)
+- Insomnia (`Insomnia`)
+- pgAdmin (`pgAdmin`, `pgAdmin 4`)
+- Chrome (`Chrome`, `Google Chrome`)
+- Terminal (`Terminal`)
+
+To customize this list, set the `WORK_APPS` environment variable with your preferred apps:
+```env
+WORK_APPS=Code,Cursor,Slack,Teams,Excel
+```
+
+#### OS Compatibility
+
+Break monitoring is currently available only on macOS. The feature will be automatically:
+- Enabled on macOS systems
+- Disabled on other operating systems
+
+Future releases will add support for other platforms.
+
 

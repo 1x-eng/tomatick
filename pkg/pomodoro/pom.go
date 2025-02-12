@@ -28,6 +28,8 @@ import (
 	"github.com/1x-eng/tomatick/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/1x-eng/tomatick/pkg/monitor"
 )
 
 var commandInstructions = []struct {
@@ -60,9 +62,15 @@ type TomatickMemento struct {
 	currentTasks             []string
 	lastAnalysis             string
 	currentChat              *llm.SuggestionChat
+	activityMonitor          *monitor.TomatickMonitor
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
+	activityMonitor, err := monitor.NewTomatickMonitor(cfg, llm.NewPerplexityAI(cfg))
+	if err != nil {
+		fmt.Println("Warning: Activity monitoring not available:", err)
+	}
+
 	return &TomatickMemento{
 		cfg:                      cfg,
 		memClient:                ltm.NewMemAI(cfg),
@@ -72,6 +80,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 		auroraInstance:           aurora.NewAurora(true),
 		theme:                    ui.NewTheme(),
 		currentSuggestions:       make([]string, 0),
+		activityMonitor:          activityMonitor,
 	}
 }
 
@@ -532,10 +541,42 @@ func (p *TomatickMemento) takeShortBreak() {
 		p.theme.Emoji.Timer,
 		p.theme.Emoji.Break)
 
+	if p.activityMonitor != nil {
+		p.activityMonitor.OnBreakStart()
+
+		// Start monitoring in background
+		monitorDone := make(chan bool)
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					if notification := p.activityMonitor.CheckBreakViolations(); notification != nil {
+						_ = notification // Notification is displayed by the manager
+					}
+				case <-monitorDone:
+					return
+				}
+			}
+		}()
+
+		// Ensure monitoring stops after timer
+		defer func() {
+			monitorDone <- true
+			summary := p.activityMonitor.OnBreakEnd()
+			if summary.HasViolations {
+				p.lastAnalysis += "\n\nBreak Pattern: " + summary.ViolationDetails
+			}
+		}()
+	}
+
 	p.startTimer(
 		p.cfg.ShortBreakDuration,
 		p.theme.Styles.InfoText.Render(message),
 	)
+
 	p.playSound()
 }
 
@@ -546,10 +587,42 @@ func (p *TomatickMemento) takeLongBreak() {
 		p.theme.Emoji.Timer,
 		p.theme.Emoji.Break)
 
+	if p.activityMonitor != nil {
+		p.activityMonitor.OnBreakStart()
+
+		// Start monitoring in background
+		monitorDone := make(chan bool)
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					if notification := p.activityMonitor.CheckBreakViolations(); notification != nil {
+						_ = notification // Notification is displayed by the manager
+					}
+				case <-monitorDone:
+					return
+				}
+			}
+		}()
+
+		// Ensure monitoring stops after timer
+		defer func() {
+			monitorDone <- true
+			summary := p.activityMonitor.OnBreakEnd()
+			if summary.HasViolations {
+				p.lastAnalysis += "\n\nBreak Pattern: " + summary.ViolationDetails
+			}
+		}()
+	}
+
 	p.startTimer(
 		p.cfg.LongBreakDuration,
 		p.theme.Styles.InfoText.Render(message),
 	)
+
 	p.playSound()
 }
 
