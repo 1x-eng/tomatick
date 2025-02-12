@@ -109,19 +109,6 @@ static int checkScreenLock(void) {
 import "C"
 
 var (
-	// workApps is a list of known work-related applications
-	workApps = map[string]bool{
-		"Code":          true, // VS Code
-		"Cursor":        true, // Cursor Editor
-		"iTerm2":        true, // Terminal
-		"Insomnia":      true, // API Testing
-		"pgAdmin 4":     true, // PostgreSQL Admin
-		"pgAdmin":       true, // PostgreSQL Admin (alternative name)
-		"Chrome":        true, // Web Browser
-		"Google Chrome": true, // Web Browser (full name)
-		"Terminal":      true, // Built-in Terminal
-	}
-
 	// idleThreshold is the time in seconds after which we consider the user idle
 	idleThreshold = 10.0 // Increased to 10 seconds to avoid false positives from casual mouse movement
 
@@ -135,6 +122,9 @@ var (
 
 	// Track continuous activity
 	lastActivityStart time.Time
+
+	// workApps holds the configured work-related applications
+	workApps map[string]bool
 )
 
 // getForegroundApp returns the name of the frontmost application
@@ -204,6 +194,17 @@ func hasRecentActivity() bool {
 
 // InitializeMonitoring sets up any necessary system-level monitoring
 func InitializeMonitoring(cfg *config.Config) error {
+	// Only proceed if break monitoring is enabled
+	if !cfg.Features.BreakMonitoring {
+		return fmt.Errorf("break monitoring is not supported on this operating system")
+	}
+
+	// Initialize work apps map
+	workApps = make(map[string]bool)
+	for _, app := range cfg.WorkApps {
+		workApps[app] = true
+	}
+
 	// Verify we can access the necessary macOS APIs
 	if _, err := getForegroundApp(); err != nil {
 		return fmt.Errorf("failed to initialize app monitoring: %w", err)

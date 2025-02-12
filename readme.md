@@ -233,4 +233,50 @@ Example notification:
 
 For detailed documentation of the monitoring system, see [pkg/monitor/README.md](pkg/monitor/README.md).
 
+### Configuration
+
+Key configuration options:
+
+```env
+# Core settings
+POMODORO_DURATION=25m
+SHORT_BREAK_DURATION=5m
+LONG_BREAK_DURATION=15m
+CYCLES_BEFORE_LONGBREAK=4
+
+# API tokens
+MEM_AI_API_TOKEN=your_mem_ai_api_token
+PERPLEXITY_API_TOKEN=your_perplexity_api_token
+
+# User settings
+USER_NAME=your_name
+
+# Break monitoring (macOS only)
+WORK_APPS=Code,Cursor,iTerm2,Chrome,Terminal  # Optional: Comma-separated list of work apps
+```
+
+#### Work Apps Configuration
+
+By default, Tomatick monitors these applications during breaks:
+- VS Code (`Code`)
+- Cursor Editor (`Cursor`)
+- iTerm2 (`iTerm2`)
+- Insomnia (`Insomnia`)
+- pgAdmin (`pgAdmin`, `pgAdmin 4`)
+- Chrome (`Chrome`, `Google Chrome`)
+- Terminal (`Terminal`)
+
+To customize this list, set the `WORK_APPS` environment variable with your preferred apps:
+```env
+WORK_APPS=Code,Cursor,Slack,Teams,Excel
+```
+
+#### OS Compatibility
+
+Break monitoring is currently available only on macOS. The feature will be automatically:
+- Enabled on macOS systems
+- Disabled on other operating systems
+
+Future releases will add support for other platforms.
+
 
