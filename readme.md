@@ -64,8 +64,8 @@ Yet another pomodoro timer (yes, really) – but this one's your accountability 
 ### Prerequisites
 
 - Go (version 1.15 or higher)
-- An account with `mem.ai` and an API token
 - Perplexity API token for AI features
+- (Optional) An account with `mem.ai` and an API token for persistent memory integration
 
 ### Installation
 
@@ -90,8 +90,8 @@ Yet another pomodoro timer (yes, really) – but this one's your accountability 
    SHORT_BREAK_DURATION=5m
    LONG_BREAK_DURATION=15m
    CYCLES_BEFORE_LONGBREAK=4
-   MEM_AI_API_TOKEN=your_mem_ai_api_token
    PERPLEXITY_API_TOKEN=your_perplexity_api_token
+   MEM_AI_API_TOKEN=your_mem_ai_api_token  # Optional: For persistent memory integration
    ```
 
 ### Usage

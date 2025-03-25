@@ -15,8 +15,8 @@ type EnvVar struct {
 var requiredEnvVars = []EnvVar{
 	{
 		Name:        "MEM_AI_API_TOKEN",
-		Description: "API token for Mem.ai integration",
-		Required:    true,
+		Description: "API token for Mem.ai integration (optional)",
+		Required:    false,
 	},
 	{
 		Name:        "PERPLEXITY_API_TOKEN",

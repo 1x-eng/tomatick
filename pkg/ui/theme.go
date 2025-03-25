@@ -50,6 +50,7 @@ type ThemeEmoji struct {
 	Warning        string
 	Success        string
 	Error          string
+	Info           string
 	Suggestion     string
 	Help           string
 	Stats          string
@@ -189,6 +190,7 @@ func NewTheme() *Theme {
 			Warning:        "⚠️",
 			Success:        "✨",
 			Error:          "❌",
+			Info:           "ℹ️",
 			Suggestion:     "💡",
 			Help:           "ℹ️",
 			Stats:          "📊",

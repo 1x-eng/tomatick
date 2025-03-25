@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/1x-eng/tomatick/config"
 )
 
 type MemAI struct {
 	client *http.Client
-	config *config.Config
+	config interface {
+		GetMemAIToken() string
+	}
 }
 
 type MemResponse struct {
@@ -19,17 +19,20 @@ type MemResponse struct {
 	URL string `json:"url"`
 }
 
-func NewMemAI(cfg *config.Config) *MemAI {
+// NewMemAI creates a new MemAI client
+func NewMemAI(cfg interface{ GetMemAIToken() string }) *MemAI {
 	return &MemAI{
 		client: &http.Client{},
 		config: cfg,
 	}
 }
 
+// CreateMem implements LongTermMemory interface
 func (m *MemAI) CreateMem(content string) (string, error) {
 	return m.postRequest("https://api.mem.ai/v0/mems", content, "")
 }
 
+// AppendToMem implements LongTermMemory interface
 func (m *MemAI) AppendToMem(memID, content string) (string, error) {
 	return m.postRequest(fmt.Sprintf("https://api.mem.ai/v0/mems/%s/append", memID), content, memID)
 }
@@ -41,7 +44,7 @@ func (m *MemAI) postRequest(url, content, memID string) (string, error) {
 
 	request, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "ApiAccessToken "+m.config.MEMAIAPIToken)
+	request.Header.Set("Authorization", "ApiAccessToken "+m.config.GetMemAIToken())
 
 	response, err := m.client.Do(request)
 	if err != nil {

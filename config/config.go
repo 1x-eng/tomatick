@@ -124,3 +124,8 @@ func parseIntEnv(key string, defaultValue int) (int, error) {
 	}
 	return strconv.Atoi(value)
 }
+
+// GetMemAIToken returns the Mem AI API token
+func (c *Config) GetMemAIToken() string {
+	return c.MEMAIAPIToken
+}

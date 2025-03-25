@@ -50,7 +50,7 @@ var commandInstructions = []struct {
 
 type TomatickMemento struct {
 	cfg                      *config.Config
-	memClient                *ltm.MemAI
+	memClient                ltm.LongTermMemory
 	llmClient                *llm.PerplexityAI
 	memID                    string
 	cycleCount               int
@@ -73,7 +73,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 
 	return &TomatickMemento{
 		cfg:                      cfg,
-		memClient:                ltm.NewMemAI(cfg),
+		memClient:                ltm.NewLongTermMemory(cfg),
 		llmClient:                llm.NewPerplexityAI(cfg),
 		cycleCount:               0,
 		cyclesSinceLastLongBreak: 0,
@@ -86,7 +86,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 
 func (p *TomatickMemento) StartCycle() {
 	if p.cycleCount == 0 {
-		displayWelcomeMessage(p.auroraInstance)
+		p.displayWelcomeMessage()
 
 		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme, p.llmClient)
 
@@ -698,6 +698,23 @@ func displayWelcomeMessage(au aurora.Aurora) {
 	fmt.Println(au.Bold(au.BrightMagenta(asciiArt)))
 	fmt.Println(au.Bold(au.BrightCyan(welcomeText)))
 	fmt.Println(strings.Repeat("─", 80))
+}
+
+// displayWelcomeMessage shows the welcome screen and integration status
+func (p *TomatickMemento) displayWelcomeMessage() {
+	displayWelcomeMessage(p.auroraInstance)
+	
+	// Check if Mem AI is configured
+	if p.cfg.GetMemAIToken() != "" {
+		fmt.Printf("\n%s %s\n", 
+			p.theme.Emoji.Success,
+			p.theme.Styles.SuccessText.Render("Long-term memory integration enabled (using mem.ai)"))
+	} else {
+		fmt.Printf("\n%s %s\n",
+			p.theme.Emoji.Info,
+			p.theme.Styles.InfoText.Render("Long-term memory integration disabled (mem.ai token not configured)"))
+	}
+	fmt.Println()
 }
 
 func (p *TomatickMemento) FlushSuggestions() {
