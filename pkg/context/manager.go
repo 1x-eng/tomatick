@@ -14,6 +14,7 @@ import (
 
 	"github.com/1x-eng/tomatick/pkg/llm"
 	"github.com/1x-eng/tomatick/pkg/ui"
+	"github.com/1x-eng/tomatick/pkg/webhook"
 )
 
 type ContextManager struct {
@@ -22,14 +23,16 @@ type ContextManager struct {
 	presenter          *ui.ContextPresenter
 	currentContextFile string
 	llmClient          *llm.PerplexityAI
+	dispatcher         webhook.Dispatcher
 }
 
-func NewContextManager(contextDir string, au aurora.Aurora, theme *ui.Theme, llmClient *llm.PerplexityAI) *ContextManager {
+func NewContextManager(contextDir string, au aurora.Aurora, theme *ui.Theme, llmClient *llm.PerplexityAI, dispatcher webhook.Dispatcher) *ContextManager {
 	return &ContextManager{
 		contextDir: contextDir,
 		au:         au,
 		presenter:  ui.NewContextPresenter(theme),
 		llmClient:  llmClient,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -271,6 +274,13 @@ func (cm *ContextManager) RefineContext(context string, llmClient *llm.Perplexit
 	} else {
 		fmt.Println("\n" + cm.au.BrightCyan("Proposed Session Blueprint:").Bold().String())
 		fmt.Println(refinedContext + "\n\n")
+
+		// Dispatch event
+		cm.dispatcher.Dispatch(webhook.EventContextRefined, map[string]string{
+			"original_length": fmt.Sprintf("%d", len(context)),
+			"refined_length":  fmt.Sprintf("%d", len(refinedContext)),
+			"refined_context": refinedContext,
+		})
 	}
 
 	// Ask about persisting the refined context

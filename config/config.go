@@ -18,6 +18,7 @@ type Config struct {
 	PerplexityAPIToken      string
 	UserName                string
 	WorkApps                []string
+	Webhooks                []string
 	Features                Features
 }
 
@@ -62,6 +63,9 @@ func LoadConfig() (*Config, error) {
 	// Get work apps from environment
 	workApps := getWorkApps()
 
+	// Get webhooks from environment
+	webhooks := getWebhooks()
+
 	// Determine available features based on OS
 	features := Features{
 		BreakMonitoring: runtime.GOOS == "darwin", // Only enable on macOS
@@ -77,6 +81,7 @@ func LoadConfig() (*Config, error) {
 		PerplexityAPIToken:      getEnvVar("PERPLEXITY_API_TOKEN"),
 		UserName:                getEnvVar("USER_NAME"),
 		WorkApps:                workApps,
+		Webhooks:                webhooks,
 		Features:                features,
 	}, nil
 }
@@ -107,6 +112,26 @@ func getWorkApps() []string {
 	}
 
 	return customApps
+}
+
+// getWebhooks gets the list of webhook URLs from environment variable
+func getWebhooks() []string {
+	webhooksEnv := getEnvVar("WEBHOOK_URLS")
+	if webhooksEnv == "" {
+		return []string{}
+	}
+
+	// Split by comma and trim spaces
+	urls := strings.Split(webhooksEnv, ",")
+	var validUrls []string
+	for _, url := range urls {
+		trimmed := strings.TrimSpace(url)
+		if trimmed != "" {
+			validUrls = append(validUrls, trimmed)
+		}
+	}
+
+	return validUrls
 }
 
 func parseDurationEnv(key, defaultValue string) (time.Duration, error) {

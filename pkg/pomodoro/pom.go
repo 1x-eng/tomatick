@@ -13,6 +13,7 @@ import (
 	"github.com/1x-eng/tomatick/pkg/ltm"
 
 	"github.com/1x-eng/tomatick/pkg/llm"
+	"github.com/1x-eng/tomatick/pkg/webhook"
 
 	"github.com/1x-eng/tomatick/pkg/markdown"
 
@@ -63,6 +64,7 @@ type TomatickMemento struct {
 	lastAnalysis             string
 	currentChat              *llm.SuggestionChat
 	activityMonitor          *monitor.TomatickMonitor
+	webhookDispatcher        webhook.Dispatcher
 }
 
 func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
@@ -81,6 +83,7 @@ func NewTomatickMemento(cfg *config.Config) *TomatickMemento {
 		theme:                    ui.NewTheme(),
 		currentSuggestions:       make([]string, 0),
 		activityMonitor:          activityMonitor,
+		webhookDispatcher:        webhook.NewHTTPDispatcher(cfg.Webhooks, filepath.Join(cfg.ContextDir, "logs")),
 	}
 }
 
@@ -88,7 +91,13 @@ func (p *TomatickMemento) StartCycle() {
 	if p.cycleCount == 0 {
 		p.displayWelcomeMessage()
 
-		contextManager := context.NewContextManager(p.cfg.ContextDir, p.auroraInstance, p.theme, p.llmClient)
+		contextManager := context.NewContextManager(
+			p.cfg.ContextDir,
+			p.auroraInstance,
+			p.theme,
+			p.llmClient,
+			p.webhookDispatcher,
+		)
 
 		sessionContext, err := contextManager.GetSessionContext(p.llmClient)
 		if err != nil {
@@ -148,6 +157,12 @@ func (p *TomatickMemento) createAndSetMemID() {
 }
 
 func (p *TomatickMemento) asyncAppendToMem(cycleSummary string) {
+	// Dispatch summary event
+	p.webhookDispatcher.Dispatch(webhook.EventSessionSummary, map[string]string{
+		"mem_id":  p.memID,
+		"content": cycleSummary,
+	})
+
 	_, err := p.memClient.AppendToMem(p.memID, cycleSummary)
 
 	if err != nil {
@@ -162,8 +177,17 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	}
 
 	tasks := p.captureTasks()
+
+	p.webhookDispatcher.Dispatch(webhook.EventWorkStart, map[string]string{
+		"tasks_count": fmt.Sprintf("%d", len(tasks)),
+	})
+
 	p.startTimer(p.cfg.TomatickMementoDuration, p.auroraInstance.Italic(p.auroraInstance.BrightRed("Tick Tock Tick Tock...")).String())
 	p.playSound()
+
+	p.webhookDispatcher.Dispatch(webhook.EventWorkComplete, map[string]string{
+		"tasks_count": fmt.Sprintf("%d", len(tasks)),
+	})
 
 	completedTasks := p.markTasksComplete(tasks)
 	reflections := p.captureReflections()
@@ -199,6 +223,12 @@ func (p *TomatickMemento) runTomatickMementoCycle() {
 	if err != nil {
 		fmt.Println(p.auroraInstance.Red("Error getting AI analysis:"), err)
 	} else {
+		// Dispatch analysis event
+		p.webhookDispatcher.Dispatch(webhook.EventAIAnalysis, map[string]string{
+			"analysis": analysis,
+			"tasks":    strings.Join(p.currentTasks, "; "),
+		})
+
 		if analysis == "" {
 			fmt.Println(p.auroraInstance.Yellow("Warning: Received empty analysis"))
 		}
@@ -308,6 +338,13 @@ func (p *TomatickMemento) captureTasks() []string {
 				fmt.Println(p.auroraInstance.Red("❗ Error getting suggestions:"), err)
 				continue
 			}
+
+			// Dispatch suggestions event
+			p.webhookDispatcher.Dispatch(webhook.EventAISuggestions, map[string]string{
+				"suggestions_count": fmt.Sprintf("%d", len(suggestions)),
+				"suggestions":       strings.Join(suggestions, "\n"),
+			})
+
 			p.currentSuggestions = suggestions // Store suggestions
 			// Initialize chat session here
 			p.currentChat = assistant.StartSuggestionChat(suggestions, p.lastAnalysis)
@@ -317,6 +354,8 @@ func (p *TomatickMemento) captureTasks() []string {
 			p.FlushSuggestions()
 		case "quit":
 			fmt.Println(p.auroraInstance.Bold(p.auroraInstance.BrightGreen("Session ended. Goodbye!")))
+			fmt.Println(p.auroraInstance.Italic("Waiting for pending webhooks..."))
+			p.webhookDispatcher.Wait()
 			os.Exit(0)
 		case "help":
 			p.displayHelp()
@@ -541,6 +580,10 @@ func (p *TomatickMemento) takeShortBreak() {
 		p.theme.Emoji.Timer,
 		p.theme.Emoji.Break)
 
+	p.webhookDispatcher.Dispatch(webhook.EventBreakStart, map[string]string{
+		"type": "short",
+	})
+
 	if p.activityMonitor != nil {
 		p.activityMonitor.OnBreakStart()
 
@@ -578,6 +621,10 @@ func (p *TomatickMemento) takeShortBreak() {
 	)
 
 	p.playSound()
+
+	p.webhookDispatcher.Dispatch(webhook.EventBreakEnd, map[string]string{
+		"type": "short",
+	})
 }
 
 func (p *TomatickMemento) takeLongBreak() {
@@ -586,6 +633,10 @@ func (p *TomatickMemento) takeLongBreak() {
 		p.theme.Emoji.Break,
 		p.theme.Emoji.Timer,
 		p.theme.Emoji.Break)
+
+	p.webhookDispatcher.Dispatch(webhook.EventBreakStart, map[string]string{
+		"type": "long",
+	})
 
 	if p.activityMonitor != nil {
 		p.activityMonitor.OnBreakStart()
@@ -624,6 +675,10 @@ func (p *TomatickMemento) takeLongBreak() {
 	)
 
 	p.playSound()
+
+	p.webhookDispatcher.Dispatch(webhook.EventBreakEnd, map[string]string{
+		"type": "long",
+	})
 }
 
 func (p *TomatickMemento) playSound() {
@@ -798,6 +853,13 @@ func (p *TomatickMemento) handleSuggestionChat() {
 			continue
 		}
 
+		// Dispatch chat exchange event
+		p.webhookDispatcher.Dispatch(webhook.EventAIChatExchange, map[string]string{
+			"context":   "suggestion_discussion",
+			"user_input": input,
+			"ai_response": response,
+		})
+
 		// Format and display response
 		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
 		fmt.Printf("%s %s\n",
@@ -871,6 +933,13 @@ func (p *TomatickMemento) handleAnalysisChat(chat *llm.SuggestionChat) {
 				fmt.Sprintf("%s Error: %v", p.theme.Emoji.Error, err)))
 			continue
 		}
+
+		// Dispatch chat exchange event
+		p.webhookDispatcher.Dispatch(webhook.EventAIChatExchange, map[string]string{
+			"context":   "analysis_discussion",
+			"user_input": input,
+			"ai_response": response,
+		})
 
 		fmt.Println(p.theme.Styles.ChatDivider.Render(strings.Repeat("─", 50)))
 		fmt.Printf("%s %s\n",
